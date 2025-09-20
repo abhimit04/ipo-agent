@@ -15,7 +15,7 @@
     "framer-motion": "^10.12.16",
     "recharts": "^2.8.0",
     "cheerio": "^1.0.0-rc.12",
-    "jugaad-data": "^1.0.9"
+    "jugaad-data": "git+https://github.com/letstream/jugaad-data-nse-api.git"
   },
   "devDependencies": {
     "eslint": "8.50.0",
