@@ -1,9 +1,9 @@
 // pages/api/ipos.js (Next.js API Route)
-// Fetches upcoming & listed IPOs using IPOAlerts first, then falls back to scraping Chittorgarh or Moneycontrol
+// Fetches upcoming & listed IPOs using IPOAlerts first, then falls back to scraping Chittorgarh / Moneycontrol
+// For listed IPOs, fetch historical data directly from NSE (scraping) instead of using jugaad-data
 
 import fetch from "node-fetch";
 import cheerio from "cheerio";
-import { historical } from "jugaad-data";
 
 const IPO_ALERTS_API_KEY = process.env.IPO_ALERTS_API_KEY;
 const IPO_ALERTS_URL = "https://api.ipoalerts.in/api/v1/ipo";
@@ -64,6 +64,24 @@ async function scrapeMoneyControl() {
   }
 }
 
+// Function to fetch historical prices from NSE for a given symbol
+async function fetchNSEHistorical(symbol, startDate, endDate) {
+  try {
+    const url = `https://www.nseindia.com/api/historical/cm/equity?symbol=${symbol}&series=[\"EQ\"]&from=${startDate}&to=${endDate}`;
+    const resp = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/json, text/plain, */*"
+      }
+    });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return data['data'].map(d => ({ date: d[0], close: parseFloat(d[4]) }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function handler(req, res) {
   try {
     // 1. Try IPOAlerts API first
@@ -81,17 +99,13 @@ export default async function handler(req, res) {
       throw new Error("Unable to fetch IPO data from any source.");
     }
 
-    // If IPOAlerts data, check for listed and enrich
+    // Enrich listed IPOs with NSE historical performance
     const listedIPOs = (ipoData.data || []).filter((ipo) => ipo.status === "Listed");
     const enrichedListed = await Promise.all(
       listedIPOs.map(async (ipo) => {
         try {
-          const symbol = ipo.symbol ? `${ipo.symbol}.NS` : null;
-          if (!symbol) return { ...ipo, performance: null };
-          const hist = await historical(symbol, {
-            start_date: ipo.listingDate,
-            end_date: new Date().toISOString().split("T")[0],
-          });
+          if (!ipo.symbol) return { ...ipo, performance: null };
+          const hist = await fetchNSEHistorical(ipo.symbol, ipo.listingDate, new Date().toISOString().split("T")[0]);
           if (!hist || hist.length === 0) return { ...ipo, performance: null };
           const firstClose = hist[0].close;
           const lastClose = hist[hist.length - 1].close;
