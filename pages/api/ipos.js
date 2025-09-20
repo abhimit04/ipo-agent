@@ -13,9 +13,13 @@ async function fetchFromIPOAlerts() {
     const resp = await fetch(`${IPO_ALERTS_URL}?status=all`, {
       headers: { "x-api-key": IPO_ALERTS_API_KEY },
     });
-    if (!resp.ok) return null;
+    if (!resp.ok) {
+      console.error(`Error fetching from IPOAlerts: HTTP status ${resp.status}`);
+      return null;
+    }
     return await resp.json();
-  } catch {
+  } catch (error) {
+    console.error("Failed to fetch from IPOAlerts API:", error);
     return null;
   }
 }
@@ -37,7 +41,8 @@ async function scrapeChittorgarh() {
       }
     });
     return { data: ipos };
-  } catch {
+  } catch (error) {
+    console.error("Failed to scrape Chittorgarh:", error);
     return null;
   }
 }
@@ -59,7 +64,8 @@ async function scrapeMoneyControl() {
       }
     });
     return { data: ipos };
-  } catch {
+  } catch (error) {
+    console.error("Failed to scrape Moneycontrol:", error);
     return null;
   }
 }
@@ -74,10 +80,14 @@ async function fetchNSEHistorical(symbol, startDate, endDate) {
         "Accept": "application/json, text/plain, */*"
       }
     });
-    if (!resp.ok) return [];
+    if (!resp.ok) {
+      console.error(`Error fetching historical data for ${symbol} from NSE: HTTP status ${resp.status}`);
+      return [];
+    }
     const data = await resp.json();
     return data['data'].map(d => ({ date: d[0], close: parseFloat(d[4]) }));
-  } catch {
+  } catch (error) {
+    console.error(`Failed to fetch historical data for ${symbol}:`, error);
     return [];
   }
 }
@@ -111,7 +121,8 @@ export default async function handler(req, res) {
           const lastClose = hist[hist.length - 1].close;
           const returnsPct = (((lastClose - firstClose) / firstClose) * 100).toFixed(2);
           return { ...ipo, performance: { firstClose, lastClose, returnsPct } };
-        } catch {
+        } catch (error) {
+          console.error(`Failed to enrich listed IPO ${ipo.symbol}:`, error);
           return { ...ipo, performance: null };
         }
       })
@@ -121,6 +132,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ upcoming, listed: enrichedListed });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("API handler failed:", err);
+    res.status(500).json({ error: "An unexpected error occurred." });
   }
 }
