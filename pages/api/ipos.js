@@ -52,7 +52,7 @@ async function scrapeMoneyControl() {
           issueCloseDate: $(tds[2]).text().trim(),
           priceBand: $(tds[3]).text().trim(),
           source: "Moneycontrol"
-          //status: "Upcoming",
+          status: "Open",
         });
       }
     });
