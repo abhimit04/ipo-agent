@@ -4,7 +4,7 @@ import cheerio from "cheerio";
 
 async function scrapeIPOCentral() {
   try {
-    const html = await fetch("https://ipocentral.in/upcoming-ipo-calendar/").then(r => r.text());
+    const html = await fetch("https://ipocentral.in/ipo-2025/").then(r => r.text());
     const $ = cheerio.load(html);
 
     const ipos = [];
