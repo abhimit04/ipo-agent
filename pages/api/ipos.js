@@ -1,6 +1,7 @@
 // pages/api/ipos.js
 import fetch from "node-fetch";
-import cheerio from "cheerio";
+import * as cheerio from "cheerio";
+
 
 async function scrapeIPOCentral() {
   try {
