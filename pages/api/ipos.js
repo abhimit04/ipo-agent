@@ -1,62 +1,57 @@
 // pages/api/ipos.js
-import Parser from "rss-parser";
+import fetch from "node-fetch";
+import cheerio from "cheerio";
 
-const NSE_RSS = "https://www.nseindia.com/rss/ipo.xml"; // Example feed
-const MONEYCONTROL_RSS = "https://www.moneycontrol.com/rss/ipo/"; // Example feed
-
-const parser = new Parser();
-
-async function fetchWithTimeout(url, timeout = 5000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-
+async function scrapeIPOCentral() {
   try {
-    const feed = await parser.parseURL(url);
-    return feed.items.map(item => ({
-      name: item.title || "Unknown IPO",
-      issueOpenDate: item.pubDate || "N/A",
-      issueCloseDate: "N/A",
-      status: "Upcoming"
-    }));
-  } catch (err) {
-    console.error(`Failed to fetch RSS feed from ${url}:`, err.message);
+    const html = await fetch("https://ipocentral.in/upcoming-ipo-calendar/").then(r => r.text());
+    const $ = cheerio.load(html);
+
+    const ipos = [];
+
+    // Each IPO is usually inside a table row or card element
+    $("table tbody tr").each((_, row) => {
+      const tds = $(row).find("td");
+      if (tds.length >= 4) {
+        ipos.push({
+          name: $(tds[0]).text().trim(),
+          issueOpenDate: $(tds[1]).text().trim(),
+          issueCloseDate: $(tds[2]).text().trim(),
+          priceBand: $(tds[3]).text().trim(),
+          source: "IPO Central",
+          status: "Upcoming"
+        });
+      }
+    });
+
+    return ipos;
+  } catch (error) {
+    console.error("Failed to scrape IPO Central:", error);
     return [];
-  } finally {
-    clearTimeout(id);
   }
 }
 
+// Example combined handler (you can add other sources too)
 export default async function handler(req, res) {
   try {
-    const results = await Promise.allSettled([
-      fetchWithTimeout(NSE_RSS),
-      fetchWithTimeout(MONEYCONTROL_RSS)
-    ]);
+    const ipoCentralData = await scrapeIPOCentral();
 
-    // Merge and deduplicate IPOs
-    const allIPOs = results
-      .filter(r => r.status === "fulfilled")
-      .flatMap(r => r.value);
-
-    const uniqueIPOs = Array.from(
-      new Map(allIPOs.map(ipo => [ipo.name.toLowerCase(), ipo])).values()
-    );
-
-    if (uniqueIPOs.length === 0) {
+    if (ipoCentralData.length === 0) {
       return res.status(200).json({
         upcoming: [],
         listed: [],
-        message: "No data available. Try again later."
+        message: "No data from IPO Central. Try again later."
       });
     }
+
+    // Deduplicate if needed
+    const uniqueIPOs = Array.from(
+      new Map(ipoCentralData.map(ipo => [ipo.name.toLowerCase(), ipo])).values()
+    );
 
     res.status(200).json({ upcoming: uniqueIPOs, listed: [] });
   } catch (err) {
     console.error("API handler failed:", err);
-    res.status(500).json({
-      upcoming: [],
-      listed: [],
-      message: "Unable to fetch IPO data. Try again later."
-    });
+    res.status(500).json({ error: "Unable to fetch IPO data. Please try again later." });
   }
 }
