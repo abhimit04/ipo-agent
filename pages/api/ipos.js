@@ -62,6 +62,7 @@ async function scrapeMoneyControl() {
     console.error("Failed to scrape Moneycontrol:", error);
     return [];
   }
+}
 /** --- API Handler --- **/
 export default async function handler(req, res) {
   try {
