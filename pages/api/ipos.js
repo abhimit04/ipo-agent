@@ -36,29 +36,32 @@ async function scrapeIPOCentral() {
 /** --- Scrape Moneycontrol (API) --- **/
 async function scrapeMoneyControl() {
   try {
-    const resp = await fetch("https://www.moneycontrol.com/ipo/", {
+    const response = await fetch("https://www.moneycontrol.com/ipo/", {
       headers: { "User-Agent": "Mozilla/5.0" }
     });
-    if (!resp.ok) {
-      console.error(`Moneycontrol API returned ${resp.status}`);
-      return [];
-    }
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-    const json = await resp.json();
-    return json.map((ipo) => ({
-      name: ipo.company_name,
-      issueOpenDate: ipo.open_date,
-      issueCloseDate: ipo.close_date,
-      priceBand: ipo.price_band || "",
-      source: "Moneycontrol",
-      status: "Upcoming",
-    }));
+    const ipos = [];
+    $("table tbody tr").each((_, row) => {
+      const tds = $(row).find("td");
+      if (tds.length >= 4) {
+        ipos.push({
+          name: $(tds[0]).text().trim(),
+          issueOpenDate: $(tds[1]).text().trim(),
+          issueCloseDate: $(tds[2]).text().trim(),
+          priceBand: $(tds[3]).text().trim(),
+          source: "Moneycontrol"
+          //status: "Upcoming",
+        });
+      }
+    });
+
+    return ipos;
   } catch (error) {
-    console.error("Failed to fetch Moneycontrol IPO data:", error);
+    console.error("Failed to scrape Moneycontrol:", error);
     return [];
   }
-}
-
 /** --- API Handler --- **/
 export default async function handler(req, res) {
   try {
