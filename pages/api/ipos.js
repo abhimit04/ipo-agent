@@ -51,7 +51,7 @@ async function scrapeMoneyControl() {
           issueOpenDate: $(tds[1]).text().trim(),
           issueCloseDate: $(tds[2]).text().trim(),
           priceBand: $(tds[3]).text().trim(),
-          source: "Moneycontrol"
+          source: "Moneycontrol",
           status: "Open",
         });
       }
