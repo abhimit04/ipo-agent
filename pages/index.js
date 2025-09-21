@@ -11,7 +11,7 @@ export default function Landing() {
       try {
         const res = await fetch('/api/ipos');
         const data = await res.json();
-        console.log('Fetched IPO data:', data);
+
         setIpos(data);
       } catch (err) {
         console.error('Failed to fetch IPOs', err);
@@ -20,6 +20,7 @@ export default function Landing() {
       }
     }
     fetchIpos();
+
   }, []);
 
   return (

@@ -144,8 +144,9 @@ export default async function handler(req, res) {
         message: "No data available. Try again later.",
       });
     }
-
+    console.log(JSON.stringify(uniqueIPOs, null, 2));
     res.status(200).json({ upcoming: uniqueIPOs, listed: [] });
+
   } catch (err) {
     console.error("API handler failed:", err);
     res.status(500).json({
