@@ -1,61 +1,82 @@
-import fetch from 'node-fetch';
-import Parser from 'rss-parser';
+// pages/api/ipos.js
+import fetch from "node-fetch";
+import Parser from "rss-parser";
 
 const parser = new Parser();
 
-// Function to fetch IPO data from NSE RSS feed
-async function fetchNSEIPOs() {
+// Helper to sanitize XML (fix unescaped &)
+function sanitizeXML(xml) {
+  return xml.replace(/&(?!(?:amp|lt|gt|quot|apos);)/g, "&amp;");
+}
+
+// Fetch NSE IPO RSS feed
+async function fetchNSERSS() {
   try {
-    const feed = await parser.parseURL('https://www.nseindia.com/rss-feed');
+    const res = await fetch("https://www.nseindia.com/rss/IPOs.xml");
+    let xml = await res.text();
+    xml = sanitizeXML(xml);
+
+    const feed = await parser.parseString(xml);
     return feed.items.map(item => ({
       name: item.title,
-      issueOpenDate: item.pubDate,
-      issueCloseDate: item.pubDate,
-      status: 'Upcoming',
+      link: item.link,
+      pubDate: item.pubDate,
+      status: "Upcoming"
     }));
-  } catch (error) {
-    console.error('Failed to fetch NSE IPO data:', error);
+  } catch (err) {
+    console.error("Failed to fetch NSE IPO data:", err);
     return [];
   }
 }
 
-// Function to fetch IPO data from Moneycontrol API
-async function fetchMoneycontrolIPOs() {
+// Fetch Moneycontrol IPO RSS feed
+async function fetchMoneycontrolRSS() {
   try {
-    const response = await fetch('https://priceapi.moneycontrol.com/ipo/upcoming', {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-    });
-    if (!response.ok) return [];
-    const data = await response.json();
-    return data.map(ipo => ({
-      name: ipo.company_name,
-      issueOpenDate: ipo.open_date,
-      issueCloseDate: ipo.close_date,
-      status: 'Upcoming',
+    const res = await fetch("https://www.moneycontrol.com/rss/ipo.xml");
+    let xml = await res.text();
+    xml = sanitizeXML(xml);
+
+    const feed = await parser.parseString(xml);
+    return feed.items.map(item => ({
+      name: item.title,
+      link: item.link,
+      pubDate: item.pubDate,
+      status: "Upcoming"
     }));
-  } catch (error) {
-    console.error('Failed to fetch Moneycontrol IPO data:', error);
+  } catch (err) {
+    console.error("Failed to fetch Moneycontrol IPO data:", err);
     return [];
   }
 }
 
 export default async function handler(req, res) {
   try {
-    const [nseIPOs, moneycontrolIPOs] = await Promise.all([fetchNSEIPOs(), fetchMoneycontrolIPOs()]);
+    const [nseData, moneyControlData] = await Promise.all([
+      fetchNSERSS(),
+      fetchMoneycontrolRSS()
+    ]);
 
-    // Merge and deduplicate IPOs by name
-    const allIPOs = [...nseIPOs, ...moneycontrolIPOs];
+    const allIPOs = [...nseData, ...moneyControlData];
+
+    // Deduplicate by name
     const uniqueIPOs = Array.from(
       new Map(allIPOs.map(ipo => [ipo.name.toLowerCase(), ipo])).values()
     );
 
     if (uniqueIPOs.length === 0) {
-      return res.status(200).json({ upcoming: [], listed: [], message: 'No data available. Try again later.' });
+      return res.status(200).json({
+        upcoming: [],
+        listed: [],
+        message: "No data available. Try again later."
+      });
     }
 
-    res.status(200).json({ upcoming: uniqueIPOs, listed: [] });
+    res.status(200).json({
+      upcoming: uniqueIPOs,
+      listed: []
+    });
   } catch (err) {
-    console.error('API handler failed:', err);
-    res.status(500).json({ error: 'Unable to fetch IPO data. Please try again later.' });
+    console.error("API handler failed:", err);
+    res.status(500).json({ error: "Unable to fetch IPO data. Please try again later." });
   }
 }
