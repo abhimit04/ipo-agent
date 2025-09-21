@@ -5,7 +5,7 @@ import fetch from "node-fetch";
 /** --- Scrape IPO Central --- **/
 async function scrapeIPOCentral() {
   try {
-    const response = await fetch("https://ipocentral.in/upcoming-ipo-calendar/", {
+    const response = await fetch("https://ipocentral.in/ipo/", {
       headers: { "User-Agent": "Mozilla/5.0" }
     });
     const html = await response.text();
