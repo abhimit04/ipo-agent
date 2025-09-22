@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
-import redis from "../lib/redis.js"; // ✅ import redis connection
+import redis from "../../lib/redis.js"; // ✅ import redis connection
 
 /** Scrape IPO List Page **/
 async function scrapeChittorgarhList() {
