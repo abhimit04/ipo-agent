@@ -139,17 +139,13 @@ export default function Landing() {
 
                           Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {formatDate(ipo.listingDate) || 'TBD'}
                         </div>
-                         <div className="text-sm text-slate-500">
-                         Price Band: {ipo.priceBand?.replace(" per share", "") || "TBD"} | Lot Size:{" "}
-                         {ipo.lotSize?.replace(" Shares", "") || "TBD"} | GMP:{" "}
-                          <span
-                           className={ipo.gmp && parseInt(ipo.gmp.replace(/[^\d]/g, "")) > 0
-                                                      ? "blink-green font-semibold"
-                                                      : "text-slate-400"}
-                           >
-                           {ipo.gmp ?? "N/A"}
+                         <div className="text-sm text-slate-600">
+                           Price Band: {ipo.priceBand?.replace(' per share', '')} |
+                           Lot Size: {ipo.lotSize?.replace(' Shares', '')} |
+                           GMP: <span className={ipo.gmp ? "blink-green" : "text-slate-400"}>
+                             {ipo.gmp || 'N/A'}
                            </span>
-                           </div>
+                         </div>
                       </div>
                     ))}
                   </div>
@@ -192,17 +188,14 @@ export default function Landing() {
 
                           Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {formatDate(ipo.listingDate) || 'TBD'}
                         </div>
-                        <div className="text-sm text-slate-500">
-                          Price Band: {ipo.priceBand?.replace(" per share", "") || "TBD"} | Lot Size:{" "}
-                          {ipo.lotSize?.replace(" Shares", "") || "TBD"} | GMP:{" "}
-                          <span
-                            className={ipo.gmp && parseInt(ipo.gmp.replace(/[^\d]/g, "")) > 0
-                              ? "blink-green font-semibold"
-                              : "text-slate-400"}
-                          >
-                            {ipo.gmp ?? "N/A"}
-                          </span>
-                        </div>
+                          </div>
+                                                 <div className="text-sm text-slate-600">
+                                                   Price Band: {ipo.priceBand?.replace(' per share', '')} |
+                                                   Lot Size: {ipo.lotSize?.replace(' Shares', '')} |
+                                                   GMP: <span className={ipo.gmp ? "blink-green" : "text-slate-400"}>
+                                                     {ipo.gmp || 'N/A'}
+                                                   </span>
+                                                 </div>
                       </div>
                     ))}
                   </div>

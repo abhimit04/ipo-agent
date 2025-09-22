@@ -2,11 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes blink-green {
-  0%, 100% { opacity: 1; color: #16a34a; } /* Tailwind green-600 */
-  50% { opacity: 0.3; color: #22c55e; }   /* Tailwind green-500 */
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
 }
 
 .blink-green {
-  animation: blink-green 1s infinite;
+  color: #16a34a; /* Tailwind green-600 */
+  font-weight: 600;
+  animation: blink 1s infinite;
 }
+
