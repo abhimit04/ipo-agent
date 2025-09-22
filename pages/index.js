@@ -35,6 +35,15 @@ export default function Landing() {
     </div>
   );
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'TBD';
+    const date = new Date(dateStr);
+    const day = date.getDate();
+    const month = date.toLocaleString('en-US', { month: 'short' });
+    return `${day} ${month}`;
+  };
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-slate-900">
       {/* Subtle pattern overlay */}
@@ -128,7 +137,7 @@ export default function Landing() {
                         <div className="font-semibold text-slate-900 mb-1">{ipo.name}</div>
                         <div className="text-sm text-slate-600 flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
-                          Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {ipo.listingDate || 'TBD'}
+                          Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {formatDate(ipo.listingDate) || 'TBD'}
                         </div>
                       </div>
                     ))}
