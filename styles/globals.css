@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes blink-green {
+  0%, 100% { opacity: 1; color: #16a34a; } /* Tailwind green-600 */
+  50% { opacity: 0.3; color: #22c55e; }   /* Tailwind green-500 */
+}
+
+.blink-green {
+  animation: blink-green 1s infinite;
+}
