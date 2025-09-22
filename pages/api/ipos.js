@@ -1,6 +1,5 @@
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
-import redis from "../../lib/redis.js"; // ✅ import redis connection
 
 /** Scrape IPO List Page **/
 async function scrapeChittorgarhList() {
@@ -40,6 +39,7 @@ async function scrapeChittorgarhDetails(url) {
     const $ = cheerio.load(html);
 
     const details = {};
+
     $("table.table tr").each((_, row) => {
       const label = $(row).find("td:first-child").text().trim();
       const value = $(row).find("td:last-child").text().trim();
@@ -57,37 +57,88 @@ async function scrapeChittorgarhDetails(url) {
   }
 }
 
+/** Scrape GMP Data from IPOWatch **/
+async function scrapeGMPData() {
+  try {
+    const response = await fetch(
+      "https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/",
+      { headers: { "User-Agent": "Mozilla/5.0" } }
+    );
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const gmpData = [];
+    $("table tbody tr").each((_, row) => {
+      const tds = $(row).find("td");
+      if (tds.length >= 4) {
+        const name = $(tds[0]).text().trim();
+        const gmp = $(tds[1]).text().trim();
+        const price = $(tds[2]).text().trim();
+        const gainPercent = $(tds[3]).text().trim();
+
+        gmpData.push({
+          name,
+          gmp,
+          ipoPrice: price,
+          gainPercent,
+        });
+      }
+    });
+
+    return gmpData;
+  } catch (err) {
+    console.error("Failed to scrape GMP data", err);
+    return [];
+  }
+}
+
+function normalizeName(name) {
+  return name
+    .toLowerCase()
+    .replace(/ltd\.?|limited/gi, "")
+    .replace(/ipo/gi, "")
+    .replace(/[^a-z0-9]/gi, "");
+}
+
 export default async function handler(req, res) {
   try {
-    const cacheKey = "ipo_data_v1";
+    const [ipos, gmpData] = await Promise.all([
+      scrapeChittorgarhList(),
+      scrapeGMPData(),
+    ]);
 
-    // 1️⃣ Check cache first
-    const cachedData = await redis.get(cacheKey);
-    if (cachedData) {
-      console.log("📦 Serving IPO data from Redis cache");
-      return res.status(200).json(JSON.parse(cachedData));
-    }
-
-    console.log("⏳ Cache miss → scraping Chittorgarh...");
-    const ipos = await scrapeChittorgarhList();
-
-    // Fetch details only for upcoming/current IPOs
+    // Fetch details for only upcoming/current IPOs
     const detailedIPOs = await Promise.all(
       ipos
         .filter((ipo) =>
           ["upcoming", "current"].includes(ipo.status.toLowerCase())
         )
-        .map(async (ipo) => ({
-          ...ipo,
-          ...(await scrapeChittorgarhDetails(ipo.detailUrl)),
-        }))
+        .map(async (ipo) => {
+          const details = await scrapeChittorgarhDetails(ipo.detailUrl);
+
+          // Try to find matching GMP data by name (case-insensitive)
+          const gmpMatch = gmpData.find(
+            (g) => normalizeName(g.name.toLowerCase()) === normalizeName(ipo.name.toLowerCase())
+          );
+
+          return {
+            ...ipo,
+            ...details,
+            gmp: gmpMatch?.gmp || null,
+            gainPercent: gmpMatch?.gainPercent || null,
+          };
+        })
     );
 
+    // Merge with closed IPOs (no extra details needed)
     const finalIPOs = [
       ...detailedIPOs,
       ...ipos.filter((ipo) => ipo.status.toLowerCase() === "closed"),
     ];
 
+    console.log(`Fetched ${finalIPOs.length} IPOs`);
+    console.log("Fetched IPOs:", JSON.stringify(finalIPOs, null, 2));
+    // Group by status
     const upcoming = finalIPOs.filter(
       (ipo) => ipo.status.toLowerCase() === "upcoming"
     );
@@ -98,13 +149,7 @@ export default async function handler(req, res) {
       (ipo) => ipo.status.toLowerCase() === "closed"
     );
 
-    const responseData = { upcoming, current, listed };
-
-    // 2️⃣ Cache the result (15 min TTL)
-    await redis.set(cacheKey, JSON.stringify(responseData), "EX", 900);
-    console.log("✅ IPO data cached in Redis (expires in 15 min)");
-
-    res.status(200).json(responseData);
+    res.status(200).json({ upcoming, current, listed });
   } catch (err) {
     console.error("API handler failed:", err);
     res.status(500).json({
