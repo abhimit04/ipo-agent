@@ -26,6 +26,7 @@ async function scrapeChittorgarhList() {
   });
 
   return ipos;
+  console.log(`Found ${ipos.length} IPOs`);
 }
 
 /** Scrape Individual IPO Detail Page **/
