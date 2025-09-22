@@ -135,6 +135,9 @@ export default async function handler(req, res) {
       ...ipos.filter((ipo) => ipo.status.toLowerCase() === "closed"),
     ];
 
+    console.log(`Fetched ${finalIPOs.length} IPOs`);
+    console.log("Fetched IPOs:", JSON.stringify(finalIPOs, null, 2));
+
     const upcoming = finalIPOs.filter(
       (ipo) => ipo.status.toLowerCase() === "upcoming"
     );
