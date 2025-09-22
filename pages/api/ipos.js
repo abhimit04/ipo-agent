@@ -35,7 +35,7 @@ async function scrapeChittorgarh() {
 /** --- Scrape InvestorGain --- **/
 async function scrapeInvestorGain() {
   try {
-    const response = await fetch("https://www.investorgain.com/report/live-ipo-gmp/331/", {
+    const response = await fetch("https://www.investorgain.com/report/live-ipo-gmp/331/ipo/", {
       headers: { "User-Agent": "Mozilla/5.0" },
     });
     const html = await response.text();
