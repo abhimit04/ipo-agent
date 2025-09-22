@@ -1,11 +1,12 @@
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 import Redis from "ioredis";
+import redisClient from '../../lib/redis';
 
 // Initialize Redis
-const redis = new Redis(process.env.REDIS_URL, {
-  tls: process.env.REDIS_URL.startsWith("rediss://") ? {} : undefined,
-});
+//const redis = new Redis(process.env.REDIS_URL, {
+//  tls: process.env.REDIS_URL.startsWith("rediss://") ? {} : undefined,
+//});
 
 /** Scrape IPO List Page **/
 async function scrapeChittorgarhList() {
@@ -101,8 +102,10 @@ function normalizeName(name) {
 export default async function handler(req, res) {
   try {
     // Try fetching cached data first
-    const cached = await redis.get("ipos-data");
-    if (cached) return res.status(200).json(JSON.parse(cached));
+    const cached = await redisClient.get('ipos-data');
+        if (cached) {
+          return res.status(200).json(JSON.parse(cached));
+        }
     console.log("📦 Serving IPO data from Redis cache");
 
     const [ipos, gmpData] = await Promise.all([
@@ -149,7 +152,7 @@ export default async function handler(req, res) {
     );
 
     // Cache result for 15 minutes
-    await redis.set("ipos-data", JSON.stringify({ upcoming, current, listed }), "EX", 900);
+    await redisClient.set('ipos-data', JSON.stringify({ upcoming, current, listed }), { EX: 900 })
     console.log("✅ IPO data cached in Redis (expires in 15 min)");
 
     res.status(200).json({ upcoming, current, listed });
