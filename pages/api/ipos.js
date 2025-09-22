@@ -42,28 +42,35 @@ async function scrapeInvestorGain() {
     const $ = cheerio.load(html);
 
     const ipos = [];
-    $("table tbody tr").each((_, row) => {
+    $("table tbody tr").each((i, row) => {
       const tds = $(row).find("td");
-      if (tds.length >= 12) {
-        ipos.push({
-          name: $(tds[0]).text().trim(),
-          GMP: $(tds[1]).text().trim(),
-          price: $(tds[5]).text().trim(),
-          iposize: $(tds[6]).text().trim(),
-          lotsize: $(tds[7]).text().trim(),
-          listingdate: $(tds[11]).text().trim(),
-          source: "InvestorGain",
-        });
-      }
+      if (tds.length < 12) return; // skip invalid rows
+
+      const name = $(tds[0]).text().trim();
+      if (!name) return;
+
+      ipos.push({
+        name,
+        GMP: $(tds[1]).text().trim(),
+        price: $(tds[5]).text().trim(),
+        iposize: $(tds[6]).text().trim(),
+        lotsize: $(tds[7]).text().trim(),
+        openDate: $(tds[8]).text().trim(),
+        closeDate: $(tds[9]).text().trim(),
+        boadate: $(tds[10]).text().trim(),
+        listingdate: $(tds[11]).text().trim(),
+        source: "InvestorGain",
+      });
     });
 
+    console.log("InvestorGain rows scraped:", ipos.length);
     return ipos;
-    console.log(ipos);
   } catch (error) {
     console.error("Failed to scrape InvestorGain:", error);
     return [];
   }
 }
+
 
 /** --- Merge & Deduplicate by Name --- **/
 function mergeIpoData(chittorgarhData, investorGainData) {
@@ -94,8 +101,11 @@ export default async function handler(req, res) {
       scrapeChittorgarh(),
       scrapeInvestorGain(),
     ]);
+    console.log("Chittorgarh IPOs:", chittorgarhData.length);
+    console.log("InvestorGain IPOs:", investorGainData.length);
 
     const combinedIpos = mergeIpoData(chittorgarhData, investorGainData);
+
 
     if (combinedIpos.length === 0) {
       return res.status(200).json({
