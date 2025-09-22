@@ -181,6 +181,9 @@ export default function Landing() {
                           <Calendar className="w-4 h-4" />
                           Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {formatDate(ipo.listingDate) || 'TBD'}
                         </div>
+                        <div className="text-sm text-slate-500">
+                              Price Band: {ipo.priceBand} | Lot Size: {ipo.lotSize}
+                         </div>
                       </div>
                     ))}
                   </div>
