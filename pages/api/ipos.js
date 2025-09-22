@@ -39,12 +39,26 @@ async function scrapeInvestorGain() {
       headers: { "User-Agent": "Mozilla/5.0" },
     });
     const html = await response.text();
+
+    // Debug: check if the table even exists
+    if (!html.includes("<table")) {
+      console.error("No <table> found in InvestorGain response!");
+    }
+
     const $ = cheerio.load(html);
 
+    const rows = $("table tbody tr");
+    console.log("Found rows:", rows.length);
+
+    // Print first row's HTML for debugging
+    if (rows.length > 0) {
+      console.log("Sample row HTML:", $(rows[0]).html());
+    }
+
     const ipos = [];
-    $("table tbody tr").each((i, row) => {
+    rows.each((i, row) => {
       const tds = $(row).find("td");
-      if (tds.length < 12) return; // skip invalid rows
+      if (tds.length < 12) return;
 
       const name = $(tds[0]).text().trim();
       if (!name) return;
@@ -70,6 +84,7 @@ async function scrapeInvestorGain() {
     return [];
   }
 }
+
 
 
 /** --- Merge & Deduplicate by Name --- **/
