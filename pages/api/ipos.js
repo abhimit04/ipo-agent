@@ -145,9 +145,9 @@ export default async function handler(req, res) {
       (ipo) => ipo.status.toLowerCase() === "closed"
     );
 
-    // Cache result for 5 minutes
-    await redis.set("ipos-data", JSON.stringify({ upcoming, current, listed }), "EX", 300);
-    console.log("✅ IPO data cached in Redis (expires in 5 min)");
+    // Cache result for 15 minutes
+    await redis.set("ipos-data", JSON.stringify({ upcoming, current, listed }), "EX", 900);
+    console.log("✅ IPO data cached in Redis (expires in 15 min)");
 
     res.status(200).json({ upcoming, current, listed });
   } catch {
