@@ -139,6 +139,9 @@ export default function Landing() {
                           <Calendar className="w-4 h-4" />
                           Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {formatDate(ipo.listingDate) || 'TBD'}
                         </div>
+                        <div className="text-sm text-slate-500">
+                         Price Band: {ipo.priceBand?.replace(' per share', '')} | Lot Size: {ipo.lotSize?.replace(' Shares', '')}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -182,7 +185,7 @@ export default function Landing() {
                           Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {formatDate(ipo.listingDate) || 'TBD'}
                         </div>
                         <div className="text-sm text-slate-500">
-                              Price Band: {ipo.priceBand} | Lot Size: {ipo.lotSize}
+                              Price Band: {ipo.priceBand?.replace(' per share', '')} | Lot Size: {ipo.lotSize?.replace(' Shares', '')}
                          </div>
                       </div>
                     ))}
