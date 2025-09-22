@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 //import Redis from "ioredis";
 //import redisClient from '../../lib/redis';
-import redis from "@/lib/redis";
+import redis from '../../lib/redis';
 
 // Initialize Redis
 //const redis = new Redis(process.env.REDIS_URL, {
