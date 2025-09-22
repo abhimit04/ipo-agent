@@ -58,6 +58,7 @@ async function scrapeInvestorGain() {
     });
 
     return ipos;
+    console.log(ipos);
   } catch (error) {
     console.error("Failed to scrape InvestorGain:", error);
     return [];
