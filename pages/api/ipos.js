@@ -2,8 +2,8 @@
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 
-/** --- Scrape Chittorgarh Central --- **/
-async function scrapeIPOCentral() {
+/** --- Scrape Chittorgarh --- **/
+async function scrapeChittorgarh() {
   try {
     const response = await fetch("https://www.chittorgarh.com/ipo/", {
       headers: { "User-Agent": "Mozilla/5.0" },
@@ -19,7 +19,7 @@ async function scrapeIPOCentral() {
           name: $(tds[0]).text().trim(),
           issueOpenDate: $(tds[1]).text().trim(),
           issueCloseDate: $(tds[2]).text().trim(),
-          status: $(tds[3]).text().trim(), // Use status directly from table
+          status: $(tds[3]).text().trim(), // already contains "Upcoming", "Current", "Closed"
           source: "Chittorgarh",
         });
       }
@@ -32,27 +32,93 @@ async function scrapeIPOCentral() {
   }
 }
 
+/** --- Scrape InvestorGain --- **/
+async function scrapeInvestorGain() {
+  try {
+    const response = await fetch("https://www.investorgain.com/report/live-ipo-gmp/331/", {
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const ipos = [];
+    $("table tbody tr").each((_, row) => {
+      const tds = $(row).find("td");
+      if (tds.length >= 12) {
+        ipos.push({
+          name: $(tds[0]).text().trim(),
+          GMP: $(tds[1]).text().trim(),
+          price: $(tds[5]).text().trim(),
+          iposize: $(tds[6]).text().trim(),
+          lotsize: $(tds[7]).text().trim(),
+          listingdate: $(tds[11]).text().trim(),
+          source: "InvestorGain",
+        });
+      }
+    });
+
+    return ipos;
+  } catch (error) {
+    console.error("Failed to scrape InvestorGain:", error);
+    return [];
+  }
+}
+
+/** --- Merge & Deduplicate by Name --- **/
+function mergeIpoData(chittorgarhData, investorGainData) {
+  const ipoMap = new Map();
+
+  // First add Chittorgarh IPOs
+  for (const ipo of chittorgarhData) {
+    ipoMap.set(ipo.name.toLowerCase(), { ...ipo });
+  }
+
+  // Merge with InvestorGain data
+  for (const ipo of investorGainData) {
+    const key = ipo.name.toLowerCase();
+    if (ipoMap.has(key)) {
+      ipoMap.set(key, { ...ipoMap.get(key), ...ipo }); // Merge fields
+    } else {
+      ipoMap.set(key, ipo); // Add if not present in Chittorgarh
+    }
+  }
+
+  return Array.from(ipoMap.values());
+}
+
 /** --- API Handler --- **/
 export default async function handler(req, res) {
   try {
-    const ipos = await scrapeIPOCentral();
+    const [chittorgarhData, investorGainData] = await Promise.all([
+      scrapeChittorgarh(),
+      scrapeInvestorGain(),
+    ]);
 
-    if (ipos.length === 0) {
+    const combinedIpos = mergeIpoData(chittorgarhData, investorGainData);
+
+    if (combinedIpos.length === 0) {
       return res.status(200).json({
         upcoming: [],
+        current: [],
         listed: [],
         message: "No data available. Try again later.",
       });
     }
 
-    // Filter IPOs based on status field
-    const upcoming = ipos.filter((ipo) => ipo.status.toLowerCase() === "upcoming");
-    const current = ipos.filter((ipo) => ipo.status.toLowerCase() === "current");
-    const listed = ipos.filter((ipo) => ipo.status.toLowerCase() === "closed");
+    // Filter by status (case-insensitive)
+    const upcoming = combinedIpos.filter(
+      (ipo) => ipo.status?.toLowerCase() === "upcoming"
+    );
+    const current = combinedIpos.filter(
+      (ipo) => ipo.status?.toLowerCase() === "current"
+    );
+    const listed = combinedIpos.filter(
+      (ipo) => ipo.status?.toLowerCase() === "closed"
+    );
 
-    console.log(JSON.stringify(ipos, null, 2));
+    console.log(JSON.stringify(combinedIpos, null, 2));
 
-    res.status(200).json({ upcoming,current,listed });
+    res.status(200).json({ upcoming, current, listed });
   } catch (err) {
     console.error("API handler failed:", err);
     res.status(500).json({
