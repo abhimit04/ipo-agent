@@ -92,6 +92,14 @@ async function scrapeGMPData() {
   }
 }
 
+function normalizeName(name) {
+  return name
+    .toLowerCase()
+    .replace(/ltd\.?|limited/gi, "")
+    .replace(/ipo/gi, "")
+    .replace(/[^a-z0-9]/gi, "");
+}
+
 export default async function handler(req, res) {
   try {
     const [ipos, gmpData] = await Promise.all([
@@ -110,7 +118,7 @@ export default async function handler(req, res) {
 
           // Try to find matching GMP data by name (case-insensitive)
           const gmpMatch = gmpData.find(
-            (g) => g.name.toLowerCase() === ipo.name.toLowerCase()
+            (g) => normalizeName(g.name.toLowerCase()) === normalizeName(ipo.name.toLowerCase())
           );
 
           return {
