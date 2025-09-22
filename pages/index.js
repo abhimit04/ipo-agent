@@ -136,7 +136,7 @@ export default function Landing() {
                       <div key={idx} className="p-4 hover:bg-slate-50 transition-colors">
                         <div className="font-semibold text-slate-900 mb-1">{ipo.name}</div>
                         <div className="text-sm text-slate-600 flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
+                          //<Calendar className="w-4 h-4" />
                           Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {formatDate(ipo.listingDate) || 'TBD'}
                         </div>
                         <div className="text-sm text-slate-500">
@@ -181,7 +181,7 @@ export default function Landing() {
                       <div key={idx} className="p-4 hover:bg-slate-50 transition-colors">
                         <div className="font-semibold text-slate-900 mb-1">{ipo.name}</div>
                         <div className="text-sm text-slate-600 flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
+                          //<Calendar className="w-4 h-4" />
                           Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {formatDate(ipo.listingDate) || 'TBD'}
                         </div>
                         <div className="text-sm text-slate-500">
