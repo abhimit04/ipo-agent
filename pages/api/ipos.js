@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 //import Redis from "ioredis";
 //import redisClient from '../../lib/redis';
-import redis from '../../lib/redis';
+//import redis from '../../lib/redis';
 
 // Initialize Redis
 //const redis = new Redis(process.env.REDIS_URL, {
@@ -107,9 +107,9 @@ export default async function handler(req, res) {
 //        if (cached) {
 //          return res.status(200).json(JSON.parse(cached));
 //        }
-       const cached = await redis.get("ipos_cache");
-       if (cached) return res.status(200).json(JSON.parse(cached));
-        console.log("📦 Serving IPO data from Redis cache");
+       //const cached = await redis.get("ipos_cache");
+       //if (cached) return res.status(200).json(JSON.parse(cached));
+        //console.log("📦 Serving IPO data from Redis cache");
 
     const [ipos, gmpData] = await Promise.all([
       scrapeChittorgarhList(),
@@ -155,8 +155,8 @@ export default async function handler(req, res) {
     );
 
     // Cache result for 15 minutes
-      await redis.set("ipos_cache", JSON.stringify(response), { EX: 600 });
-      console.log("✅ IPO data cached in Redis (expires in 15 min)");
+      //await redis.set("ipos_cache", JSON.stringify(response), { EX: 600 });
+      //console.log("✅ IPO data cached in Redis (expires in 15 min)");
 
     res.status(200).json({ upcoming, current, listed });
   } catch {
