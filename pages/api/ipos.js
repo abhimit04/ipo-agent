@@ -47,11 +47,12 @@ export default async function handler(req, res) {
 
     // Filter IPOs based on status field
     const upcoming = ipos.filter((ipo) => ipo.status.toLowerCase() === "upcoming");
+    const current = ipos.filter((ipo) => ipo.status.toLowerCase() === "current");
     const listed = ipos.filter((ipo) => ipo.status.toLowerCase() === "closed");
 
     console.log(JSON.stringify(ipos, null, 2));
 
-    res.status(200).json({ upcoming, listed });
+    res.status(200).json({ upcoming,current,listed });
   } catch (err) {
     console.error("API handler failed:", err);
     res.status(500).json({

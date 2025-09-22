@@ -93,7 +93,7 @@ export default function Landing() {
             ))
           }
 
-          <h2 className="text-2xl font-semibold mb-4">Upcoming IPOs</h2>
+          <h2 className="text-2xl font-semibold mb-4">Current IPOs</h2>
                     {loading ? <p>Loading...</p> :
                       ipos.current.length === 0 ? <p>No current IPOs found.</p> :
                       ipos.current.map((ipo, idx) => (
