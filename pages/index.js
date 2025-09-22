@@ -93,6 +93,17 @@ export default function Landing() {
             ))
           }
 
+          <h2 className="text-2xl font-semibold mb-4">Upcoming IPOs</h2>
+                    {loading ? <p>Loading...</p> :
+                      ipos.current.length === 0 ? <p>No current IPOs found.</p> :
+                      ipos.current.map((ipo, idx) => (
+                        <div key={idx} className="p-4 bg-white rounded-lg shadow mb-3">
+                          <div className="font-semibold">{ipo.name}</div>
+                          <div className="text-sm text-slate-500">Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate}</div>
+                        </div>
+                      ))
+                    }
+
           <h2 className="text-2xl font-semibold mt-6 mb-4">Listed IPO Performance</h2>
           {loading ? <p>Loading...</p> :
             ipos.listed.length === 0 ? <p>No listed IPOs found.</p> :
