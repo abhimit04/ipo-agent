@@ -26,7 +26,6 @@ async function scrapeChittorgarhList() {
   });
 
   return ipos;
-  console.log(`Found ${ipos.length} IPOs`);
 }
 
 /** Scrape Individual IPO Detail Page **/
@@ -58,9 +57,47 @@ async function scrapeChittorgarhDetails(url) {
   }
 }
 
+/** Scrape GMP Data from IPOWatch **/
+async function scrapeGMPData() {
+  try {
+    const response = await fetch(
+      "https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/",
+      { headers: { "User-Agent": "Mozilla/5.0" } }
+    );
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const gmpData = [];
+    $("table tbody tr").each((_, row) => {
+      const tds = $(row).find("td");
+      if (tds.length >= 4) {
+        const name = $(tds[0]).text().trim();
+        const gmp = $(tds[1]).text().trim();
+        const price = $(tds[2]).text().trim();
+        const gainPercent = $(tds[3]).text().trim();
+
+        gmpData.push({
+          name,
+          gmp,
+          ipoPrice: price,
+          gainPercent,
+        });
+      }
+    });
+
+    return gmpData;
+  } catch (err) {
+    console.error("Failed to scrape GMP data", err);
+    return [];
+  }
+}
+
 export default async function handler(req, res) {
   try {
-    const ipos = await scrapeChittorgarhList();
+    const [ipos, gmpData] = await Promise.all([
+      scrapeChittorgarhList(),
+      scrapeGMPData(),
+    ]);
 
     // Fetch details for only upcoming/current IPOs
     const detailedIPOs = await Promise.all(
@@ -68,10 +105,21 @@ export default async function handler(req, res) {
         .filter((ipo) =>
           ["upcoming", "current"].includes(ipo.status.toLowerCase())
         )
-        .map(async (ipo) => ({
-          ...ipo,
-          ...(await scrapeChittorgarhDetails(ipo.detailUrl)),
-        }))
+        .map(async (ipo) => {
+          const details = await scrapeChittorgarhDetails(ipo.detailUrl);
+
+          // Try to find matching GMP data by name (case-insensitive)
+          const gmpMatch = gmpData.find(
+            (g) => g.name.toLowerCase() === ipo.name.toLowerCase()
+          );
+
+          return {
+            ...ipo,
+            ...details,
+            gmp: gmpMatch?.gmp || null,
+            gainPercent: gmpMatch?.gainPercent || null,
+          };
+        })
     );
 
     // Merge with closed IPOs (no extra details needed)
@@ -79,6 +127,7 @@ export default async function handler(req, res) {
       ...detailedIPOs,
       ...ipos.filter((ipo) => ipo.status.toLowerCase() === "closed"),
     ];
+
     console.log(`Fetched ${finalIPOs.length} IPOs`);
     console.log("Fetched IPOs:", JSON.stringify(finalIPOs, null, 2));
     // Group by status
