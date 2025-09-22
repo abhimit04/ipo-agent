@@ -1,148 +1,94 @@
-// pages/api/ipos.js
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 
-/** --- Scrape Chittorgarh --- **/
-async function scrapeChittorgarh() {
-  try {
-    const response = await fetch("https://www.chittorgarh.com/ipo/", {
-      headers: { "User-Agent": "Mozilla/5.0" },
-    });
-    const html = await response.text();
-    const $ = cheerio.load(html);
+/** Scrape IPO List Page **/
+async function scrapeChittorgarhList() {
+  const response = await fetch("https://www.chittorgarh.com/ipo/", {
+    headers: { "User-Agent": "Mozilla/5.0" },
+  });
+  const html = await response.text();
+  const $ = cheerio.load(html);
 
-    const ipos = [];
-    $("table tbody tr").each((_, row) => {
-      const tds = $(row).find("td");
-      if (tds.length >= 4) {
-        ipos.push({
-          name: $(tds[0]).text().trim(),
-          issueOpenDate: $(tds[1]).text().trim(),
-          issueCloseDate: $(tds[2]).text().trim(),
-          status: $(tds[3]).text().trim(), // already contains "Upcoming", "Current", "Closed"
-          source: "Chittorgarh",
-        });
-      }
-    });
-
-    return ipos;
-  } catch (error) {
-    console.error("Failed to scrape Chittorgarh:", error);
-    return [];
-  }
-}
-
-/** --- Scrape InvestorGain --- **/
-async function scrapeInvestorGain() {
-  try {
-    const response = await fetch("https://www.investorgain.com/report/live-ipo-gmp/331/ipo/", {
-      headers: { "User-Agent": "Mozilla/5.0" },
-    });
-    const html = await response.text();
-
-    // Debug: check if the table even exists
-    if (!html.includes("<table")) {
-      console.error("No <table> found in InvestorGain response!");
-    }
-
-    const $ = cheerio.load(html);
-
-    const rows = $("table tbody tr");
-    console.log("Found rows:", rows.length);
-
-    // Print first row's HTML for debugging
-    if (rows.length > 0) {
-      console.log("Sample row HTML:", $(rows[0]).html());
-    }
-
-    const ipos = [];
-    rows.each((i, row) => {
-      const tds = $(row).find("td");
-      if (tds.length < 12) return;
-
-      const name = $(tds[0]).text().trim();
-      if (!name) return;
-
+  const ipos = [];
+  $("table tbody tr").each((_, row) => {
+    const tds = $(row).find("td");
+    if (tds.length >= 4) {
+      const link = $(tds[0]).find("a").attr("href");
       ipos.push({
-        name,
-        GMP: $(tds[1]).text().trim(),
-        price: $(tds[5]).text().trim(),
-        iposize: $(tds[6]).text().trim(),
-        lotsize: $(tds[7]).text().trim(),
-        openDate: $(tds[8]).text().trim(),
-        closeDate: $(tds[9]).text().trim(),
-        boadate: $(tds[10]).text().trim(),
-        listingdate: $(tds[11]).text().trim(),
-        source: "InvestorGain",
+        name: $(tds[0]).text().trim(),
+        issueOpenDate: $(tds[1]).text().trim(),
+        issueCloseDate: $(tds[2]).text().trim(),
+        status: $(tds[3]).text().trim(),
+        detailUrl: link ? `https://www.chittorgarh.com${link}` : null,
+        source: "Chittorgarh",
       });
+    }
+  });
+
+  return ipos;
+}
+
+/** Scrape Individual IPO Detail Page **/
+async function scrapeChittorgarhDetails(url) {
+  if (!url) return {};
+  try {
+    const response = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const details = {};
+
+    $("table.table tr").each((_, row) => {
+      const label = $(row).find("td:first-child").text().trim();
+      const value = $(row).find("td:last-child").text().trim();
+
+      if (label.includes("Price Band")) details.priceBand = value;
+      if (label.includes("Lot Size")) details.lotSize = value;
+      if (label.includes("Issue Size")) details.issueSize = value;
+      if (label.includes("Listing Date")) details.listingDate = value;
     });
 
-    console.log("InvestorGain rows scraped:", ipos.length);
-    return ipos;
-  } catch (error) {
-    console.error("Failed to scrape InvestorGain:", error);
-    return [];
+    return details;
+  } catch (err) {
+    console.error(`Failed to fetch IPO details for ${url}`, err);
+    return {};
   }
 }
 
-
-
-/** --- Merge & Deduplicate by Name --- **/
-function mergeIpoData(chittorgarhData, investorGainData) {
-  const ipoMap = new Map();
-
-  // First add Chittorgarh IPOs
-  for (const ipo of chittorgarhData) {
-    ipoMap.set(ipo.name.toLowerCase(), { ...ipo });
-  }
-
-  // Merge with InvestorGain data
-  for (const ipo of investorGainData) {
-    const key = ipo.name.toLowerCase();
-    if (ipoMap.has(key)) {
-      ipoMap.set(key, { ...ipoMap.get(key), ...ipo }); // Merge fields
-    } else {
-      ipoMap.set(key, ipo); // Add if not present in Chittorgarh
-    }
-  }
-
-  return Array.from(ipoMap.values());
-}
-
-/** --- API Handler --- **/
 export default async function handler(req, res) {
   try {
-    const [chittorgarhData, investorGainData] = await Promise.all([
-      scrapeChittorgarh(),
-      scrapeInvestorGain(),
-    ]);
-    console.log("Chittorgarh IPOs:", chittorgarhData.length);
-    console.log("InvestorGain IPOs:", investorGainData.length);
+    const ipos = await scrapeChittorgarhList();
 
-    const combinedIpos = mergeIpoData(chittorgarhData, investorGainData);
-
-
-    if (combinedIpos.length === 0) {
-      return res.status(200).json({
-        upcoming: [],
-        current: [],
-        listed: [],
-        message: "No data available. Try again later.",
-      });
-    }
-
-    // Filter by status (case-insensitive)
-    const upcoming = combinedIpos.filter(
-      (ipo) => ipo.status?.toLowerCase() === "upcoming"
-    );
-    const current = combinedIpos.filter(
-      (ipo) => ipo.status?.toLowerCase() === "current"
-    );
-    const listed = combinedIpos.filter(
-      (ipo) => ipo.status?.toLowerCase() === "closed"
+    // Fetch details for only upcoming/current IPOs
+    const detailedIPOs = await Promise.all(
+      ipos
+        .filter((ipo) =>
+          ["upcoming", "current"].includes(ipo.status.toLowerCase())
+        )
+        .map(async (ipo) => ({
+          ...ipo,
+          ...(await scrapeChittorgarhDetails(ipo.detailUrl)),
+        }))
     );
 
-    console.log(JSON.stringify(combinedIpos, null, 2));
+    // Merge with closed IPOs (no extra details needed)
+    const finalIPOs = [
+      ...detailedIPOs,
+      ...ipos.filter((ipo) => ipo.status.toLowerCase() === "closed"),
+    ];
+
+    // Group by status
+    const upcoming = finalIPOs.filter(
+      (ipo) => ipo.status.toLowerCase() === "upcoming"
+    );
+    const current = finalIPOs.filter(
+      (ipo) => ipo.status.toLowerCase() === "current"
+    );
+    const listed = finalIPOs.filter(
+      (ipo) => ipo.status.toLowerCase() === "closed"
+    );
 
     res.status(200).json({ upcoming, current, listed });
   } catch (err) {
