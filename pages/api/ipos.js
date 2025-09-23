@@ -89,7 +89,7 @@ async function scrapeChittorgarhDetails(url) {
     console.log("Company Financials:", details.financials);
 
     // Save to DB
-    await saveIPOToDB(ipoName, details.about, details.financials);
+    await saveIPOToDB(ipoName, details.company.about, details.financials);
 
     return details;
   } catch (err) {
