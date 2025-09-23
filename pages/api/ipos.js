@@ -173,7 +173,10 @@ export default async function handler(req, res) {
 //          const gmpMatch = gmpData.find(
 //            (g) => normalizeName(g.name) === normalizeName(ipo.name)
 //          );
-            let gmpMatch = ipoCentralGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
+            let gmpMatch = ipoCentralGMP.find(
+              (g) => normalizeName(ipo.name).includes(normalizeName(g.name))
+                   || normalizeName(g.name).includes(normalizeName(ipo.name))
+            );
             console.log("GMP Match from IPOWatch:", gmpMatch);
              if (!gmpMatch) {
               gmpMatch = ipoInvestorGainGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
