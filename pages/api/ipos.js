@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 import puppeteer from "puppeteer";
+import { chromium } from "playwright";
 //import Redis from "ioredis";
 //import redisClient from '../../lib/redis';
 //import redis from '../../lib/redis';
@@ -93,30 +94,30 @@ async function scrapeGMPData() {
   }
 }
 
-async function scrapeIPOdekhoGMP() {
-  try {
-    const browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
-    await page.goto("https://www.ipodekho.com/gmp", { waitUntil: "networkidle2" });
 
-    const gmpData = await page.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll("table tbody tr"));
-      return rows.map((row) => {
-        const cells = row.querySelectorAll("td");
-        return {
-          name: cells[0]?.innerText.trim(),
-          gmp: cells[1]?.innerText.trim(),
-          ipoPrice: cells[2]?.innerText.trim(),
-          gainPercent: cells[3]?.innerText.trim(),
-        };
-      });
+
+async function scrapeIPODekhoGMP() {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.goto("https://www.ipodekho.com/gmp", { waitUntil: "networkidle" });
+
+  // Wait for table to render fully
+  await page.waitForSelector("table tbody tr");
+
+  const gmpData = await page.$$eval("table tbody tr", rows => {
+    return rows.map(row => {
+      const cells = row.querySelectorAll("td");
+      return {
+        name: cells[0]?.innerText.trim(),
+        gmp: cells[1]?.innerText.trim(),
+        ipoPrice: cells[2]?.innerText.trim(),
+        gainPercent: cells[3]?.innerText.trim(),
+      };
     });
+  });
 
-    await browser.close();
-    return gmpData;
-  } catch {
-    return [];
-  }
+  await browser.close();
+  return gmpData;
 }
 
 function normalizeName(name) {
