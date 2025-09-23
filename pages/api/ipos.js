@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 import stringSimilarity from "string-similarity";
+import { saveIPOToDB } from "../../lib/db.js";
 //import puppeteer from "puppeteer";
 //import Redis from "ioredis";
 //import redisClient from '../../lib/redis';
@@ -84,6 +85,9 @@ async function scrapeChittorgarhDetails(url) {
 
     details.financials = financialsSection.join("\n\n");
     console.log("Company Financials:", details.financials);
+
+    // Save to DB
+    await saveIPOToDB(ipoName, details.about, details.financials);
 
     return details;
   } catch (err) {
