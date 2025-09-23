@@ -72,17 +72,18 @@ async function scrapeChittorgarhDetails(url) {
    console.log("Company About:", details.company.about);
 
     // Financials
+    // Extract Company Financials (raw, full text)
     details.financials = [];
-    const financialTable = $("h2:contains('Company Financials')").nextAll("table").first();
-    financialTable.find("tr").each((_, row) => {
-      const cells = $(row).find("td");
-      if (cells.length > 1) {
-        const periodEnded = $(cells[0]).text().trim();
-        const assets = $(cells[1]).text().trim();
-        details.financials.push({ periodEnded, assets });
-        console.log(`Financials - Period: ${periodEnded}, Assets: ${assets}`);
-      }
-    });
+
+    const financialsSection = [];
+    $("h2, h3").filter((_, el) => $(el).text().trim().includes("Company Financials"))
+      .nextUntil("h2, h3")
+      .each((_, el) => {
+        financialsSection.push($(el).text().trim());
+      });
+
+    details.financials = financialsSection.join("\n\n");
+    console.log("Company Financials:", details.financials);
 
     return details;
   } catch (err) {
