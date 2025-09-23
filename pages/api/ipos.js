@@ -59,27 +59,17 @@ async function scrapeChittorgarhDetails(url) {
       if (label.includes("Listing Date")) details.listingDate = value;
     });
 // Company About
-    details.company = {};
-    details.company.about = [];
-    details.company.products = [];
+   details.company = {};
+   const aboutSection = [];
 
-    // Match heading that starts with "About " (e.g., "About GK Energy Ltd.")
-    $("h2, h3").filter((_, el) => $(el).text().trim().startsWith("About "))
-      .nextUntil("h2, h3") // get everything until next heading
-      .each((_, el) => {
-        if ($(el).is("p")) {
-          details.company.about.push($(el).text().trim());
-        }
-        if ($(el).is("ul")) {
-          $(el).find("li").each((_, li) => {
-            details.company.products.push($(li).text().trim());
-          });
-        }
-      });
+   $("h2, h3").filter((_, el) => $(el).text().trim().startsWith("About "))
+     .nextUntil("h2, h3") // grab everything until the next heading
+     .each((_, el) => {
+       aboutSection.push($(el).text().trim());
+     });
 
-    // Combine paragraphs into a single string
-    details.company.about = details.company.about.join("\n");
-    console.log("Company About:", details.company.about);
+   details.company.about = aboutSection.join("\n\n");
+   console.log("Company About:", details.company.about);
 
     // Financials
     details.financials = [];
