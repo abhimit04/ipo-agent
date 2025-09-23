@@ -60,21 +60,26 @@ async function scrapeChittorgarhDetails(url) {
     });
 // Company About
     details.company = {};
-    const aboutSection = [];
-    $("h2:contains('About')").nextUntil("h2").each((_, el) => {
-      if ($(el).is("p")) aboutSection.push($(el).text().trim());
-    });
-    details.company.about = aboutSection.join("\n");
-    console.log("Company About:", details.company.about);
-
-    // Products
+    details.company.about = [];
     details.company.products = [];
-    $("h2:contains('About')").nextAll("ul").each((_, ul) => {
-      $(ul).find("li").each((_, li) => {
-        details.company.products.push($(li).text().trim());
-        console.log("Product:", $(li).text().trim());
+
+    // Match heading that starts with "About " (e.g., "About GK Energy Ltd.")
+    $("h2, h3").filter((_, el) => $(el).text().trim().startsWith("About "))
+      .nextUntil("h2, h3") // get everything until next heading
+      .each((_, el) => {
+        if ($(el).is("p")) {
+          details.company.about.push($(el).text().trim());
+        }
+        if ($(el).is("ul")) {
+          $(el).find("li").each((_, li) => {
+            details.company.products.push($(li).text().trim());
+          });
+        }
       });
-    });
+
+    // Combine paragraphs into a single string
+    details.company.about = details.company.about.join("\n");
+    console.log("Company About:", details.company.about);
 
     // Financials
     details.financials = [];
