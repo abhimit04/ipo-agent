@@ -67,14 +67,14 @@ export default function Landing() {
             <div className="text-sm text-slate-600 font-medium">Track. Analyze. Advise.</div>
           </div>
         </div>
-        <nav className="flex items-center gap-6">
-          <a className="text-sm font-medium hover:text-indigo-600 transition-colors cursor-pointer">Features</a>
-          <a className="text-sm font-medium hover:text-indigo-600 transition-colors cursor-pointer">Past IPOs</a>
-          <a className="text-sm font-medium hover:text-indigo-600 transition-colors cursor-pointer">GMP</a>
-          <button className="ml-2 inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-            Get Early Access
-          </button>
-        </nav>
+//        <nav className="flex items-center gap-6">
+//          <a className="text-sm font-medium hover:text-indigo-600 transition-colors cursor-pointer">Features</a>
+//          <a className="text-sm font-medium hover:text-indigo-600 transition-colors cursor-pointer">Past IPOs</a>
+//          <a className="text-sm font-medium hover:text-indigo-600 transition-colors cursor-pointer">GMP</a>
+//          <button className="ml-2 inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+//            Get Early Access
+//          </button>
+//        </nav>
       </header>
 
       {/* Hero Section */}
