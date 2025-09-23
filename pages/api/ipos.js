@@ -58,30 +58,36 @@ async function scrapeChittorgarhDetails(url) {
       if (label.includes("Issue Size")) details.issueSize = value;
       if (label.includes("Listing Date")) details.listingDate = value;
     });
-/// Extract Company About/Portfolio
-     details.company = {};
-     const aboutSection = $("h2:contains('About')").nextAll("p, ul").slice(0, 2); // first paragraph + bullet list
-     details.company.about = aboutSection
-       .map((_, el) => $(el).text().trim())
-       .get()
-       .join("\n");
+// Company About
+    details.company = {};
+    const aboutSection = [];
+    $("h2:contains('About')").nextUntil("h2").each((_, el) => {
+      if ($(el).is("p")) aboutSection.push($(el).text().trim());
+    });
+    details.company.about = aboutSection.join("\n");
+    console.log("Company About:", details.company.about);
 
-     // Extract Product Portfolio as list
-     details.company.products = [];
-     $("h2:contains('About')").nextAll("ul").first().find("li").each((_, li) => {
-       details.company.products.push($(li).text().trim());
-     });
+    // Products
+    details.company.products = [];
+    $("h2:contains('About')").nextAll("ul").each((_, ul) => {
+      $(ul).find("li").each((_, li) => {
+        details.company.products.push($(li).text().trim());
+        console.log("Product:", $(li).text().trim());
+      });
+    });
 
-     // Extract Financials
-     details.financials = [];
-     $("h2:contains('Company Financials') + table tr").each((_, row) => {
-       const cells = $(row).find("td");
-       if (cells.length > 1) {
-         const periodEnded = $(cells[0]).text().trim();
-         const assets = $(cells[1]).text().trim();
-         details.financials.push({ periodEnded, assets });
-       }
-     });
+    // Financials
+    details.financials = [];
+    const financialTable = $("h2:contains('Company Financials')").nextAll("table").first();
+    financialTable.find("tr").each((_, row) => {
+      const cells = $(row).find("td");
+      if (cells.length > 1) {
+        const periodEnded = $(cells[0]).text().trim();
+        const assets = $(cells[1]).text().trim();
+        details.financials.push({ periodEnded, assets });
+        console.log(`Financials - Period: ${periodEnded}, Assets: ${assets}`);
+      }
+    });
 
     return details;
   } catch (err) {
