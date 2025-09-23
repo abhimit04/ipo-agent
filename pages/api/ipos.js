@@ -98,7 +98,7 @@ async function scrapeChittorgarhDetails(url) {
   }
 }
 
-/** Scrape GMP Data from IPOWatch **/
+/** Scrape GMP Data from IPOWatch */
 async function scrapeGMPData() {
   try {
     const response = await fetch(
