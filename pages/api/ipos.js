@@ -137,6 +137,7 @@ function normalizeName(name) {
       .replace(/closing today/gi, "")
       .replace(/listing today/gi, "")
       .replace(/live/gi, "")
+      .replace(/&.*/g, "").trim()
       .replace(/[^a-z0-9]/gi, "");
 }
 
@@ -176,7 +177,7 @@ export default async function handler(req, res) {
             console.log("GMP Match from IPOWatch:", gmpMatch);
              if (!gmpMatch) {
               gmpMatch = ipoInvestorGainGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
-              console.log("GMP Match from InvestorGain:", gmpMatch);
+              //console.log("GMP Match from InvestorGain:", gmpMatch);
              }
 
           return {
