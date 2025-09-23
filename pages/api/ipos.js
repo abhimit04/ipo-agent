@@ -58,25 +58,30 @@ async function scrapeChittorgarhDetails(url) {
       if (label.includes("Issue Size")) details.issueSize = value;
       if (label.includes("Listing Date")) details.listingDate = value;
     });
-// Company Details
-    details.company = {};
-    $("h3:contains('Company Details') + table tr").each((_, row) => {
-      const key = $(row).find("td:first-child").text().trim();
-      const value = $(row).find("td:last-child").text().trim();
-      details.company[key] = value;
-    });
+/// Extract Company About/Portfolio
+     details.company = {};
+     const aboutSection = $("h2:contains('About')").nextAll("p, ul").slice(0, 2); // first paragraph + bullet list
+     details.company.about = aboutSection
+       .map((_, el) => $(el).text().trim())
+       .get()
+       .join("\n");
 
-    // Financial Summary
-    details.financials = [];
-    $("h3:contains('Financial Summary') + table tr").each((_, row) => {
-      const cells = $(row).find("td");
-      if (cells.length > 1) {
-        const year = $(cells[0]).text().trim();
-        const revenue = $(cells[1]).text().trim();
-        const profit = $(cells[2]).text().trim();
-        details.financials.push({ year, revenue, profit });
-      }
-    });
+     // Extract Product Portfolio as list
+     details.company.products = [];
+     $("h2:contains('About')").nextAll("ul").first().find("li").each((_, li) => {
+       details.company.products.push($(li).text().trim());
+     });
+
+     // Extract Financials
+     details.financials = [];
+     $("h2:contains('Company Financials') + table tr").each((_, row) => {
+       const cells = $(row).find("td");
+       if (cells.length > 1) {
+         const periodEnded = $(cells[0]).text().trim();
+         const assets = $(cells[1]).text().trim();
+         details.financials.push({ periodEnded, assets });
+       }
+     });
 
     return details;
   } catch (err) {
