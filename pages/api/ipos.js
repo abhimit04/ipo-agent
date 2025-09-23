@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 import stringSimilarity from "string-similarity";
-import { saveIPOToDB } from "../../lib/db.js";
+import { saveIPOToDB,getIPOFromDB } from "../../lib/db.js";
 //import puppeteer from "puppeteer";
 //import Redis from "ioredis";
 //import redisClient from '../../lib/redis';
@@ -62,6 +62,14 @@ async function scrapeChittorgarhDetails(url) {
 // Company About
    const aboutHeading = $("h2, h3").filter((_, el) => $(el).text().trim().startsWith("About ")).first();
    const ipoName = aboutHeading.text().trim().replace("About ", "");
+
+   // Step 2: Check Supabase for existing data
+     const existing = await getIPOFromDB(ipoName);
+     if (existing && existing.about && existing.financials) {
+       console.log(`IPO "${ipoName}" already in Supabase. Skipping scrape.`);
+       return existing; // return data directly
+     }
+
    details.company = {};
    const aboutSection = [];
 
