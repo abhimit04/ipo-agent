@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
-import puppeteer from "puppeteer";
+//import puppeteer from "puppeteer";
 //import Redis from "ioredis";
 //import redisClient from '../../lib/redis';
 //import redis from '../../lib/redis';
@@ -93,30 +93,13 @@ async function scrapeGMPData() {
   }
 }
 
-async function scrapeIPOdekhoGMP() {
-  try {
-    const browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
-    await page.goto("https://www.ipodekho.com/gmp", { waitUntil: "networkidle2" });
-
-    const gmpData = await page.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll("table tbody tr"));
-      return rows.map((row) => {
-        const cells = row.querySelectorAll("td");
-        return {
-          name: cells[0]?.innerText.trim(),
-          gmp: cells[1]?.innerText.trim(),
-          ipoPrice: cells[2]?.innerText.trim(),
-          gainPercent: cells[3]?.innerText.trim(),
-        };
-      });
-    });
-
-    await browser.close();
-    return gmpData;
-  } catch {
-    return [];
+async function fetchGMPFromInvestorGainList(ipos) {
+  const results = [];
+  for (const ipo of ipos) {
+    const gmp = await fetchGMPFromInvestorGain(ipo.name);
+    if (gmp !== null) results.push({ name: ipo.name, gmp });
   }
+  return results;
 }
 
 function normalizeName(name) {
@@ -138,11 +121,15 @@ export default async function handler(req, res) {
        //if (cached) return res.status(200).json(JSON.parse(cached));
         //console.log("📦 Serving IPO data from Redis cache");
 
-    const [ipos, ipoCentralGMP, ipoDekhoGMP] = await Promise.all([
-      scrapeChittorgarhList(),
-      scrapeGMPData(),
-      scrapeIPOdekhoGMP(), // Fetch GMP data from IPOdekho as well
-    ]);
+//    const [ipos, ipoCentralGMP, ipoInvestorGainGMP] = await Promise.all([
+//      scrapeChittorgarhList(),
+//      scrapeGMPData(),
+//      fetchGMPFromInvestorGain(), // Fetch GMP data from IPOdekho as well
+//    ]);
+
+    const ipos = await scrapeChittorgarhList();
+     const ipoCentralGMP = await scrapeGMPData();
+    const ipoInvestorGainGMP = await fetchGMPFromInvestorGainList(ipos);
 
     const detailedIPOs = await Promise.all(
       ipos
@@ -158,7 +145,7 @@ export default async function handler(req, res) {
             let gmpMatch = ipoCentralGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
             console.log("GMP Match from IPOWatch:", gmpMatch);
              if (!gmpMatch) {
-              gmpMatch = ipoDekhoGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
+              gmpMatch = ipoInvestorGainGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
               console.log("GMP Match from IPOdekho:", gmpMatch);
              }
 
