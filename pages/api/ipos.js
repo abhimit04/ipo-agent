@@ -132,19 +132,12 @@ async function fetchGMPFromInvestorGainList(ipos) {
 function normalizeName(name) {
   return name
     .toLowerCase()
-    .replace(/ltd\.?|limited/gi, "")
-    .replace(/ipo/gi, "")
-    .replace(/[^a-z0-9]/gi, "");
-}
-
-function fuzzyFindGMP(ipoName, gmpData) {
-  const ipoNorm = normalizeName(ipoName);
-  const names = gmpData.map(g => normalizeName(g.name));
-  const { bestMatch, bestMatchIndex } = stringSimilarity.findBestMatch(ipoNorm, names);
-  if (bestMatch.rating > 0.7) {   // threshold to avoid wrong matches
-    return gmpData[bestMatchIndex];
-  }
-  return null;
+      .replace(/ltd\.?|limited/gi, "")
+      .replace(/ipo/gi, "")
+      .replace(/closing today/gi, "")
+      .replace(/listing today/gi, "")
+      .replace(/live/gi, "")
+      .replace(/[^a-z0-9]/gi, "");
 }
 
 export default async function handler(req, res) {
@@ -179,10 +172,10 @@ export default async function handler(req, res) {
 //          const gmpMatch = gmpData.find(
 //            (g) => normalizeName(g.name) === normalizeName(ipo.name)
 //          );
-            let gmpMatch = fuzzyFindGMP(ipo.name, ipoCentralGMP);
+            let gmpMatch = ipoCentralGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
             console.log("GMP Match from IPOWatch:", gmpMatch);
              if (!gmpMatch) {
-              gmpMatch = fuzzyFindGMP(ipo.name, ipoInvestorGainGMP);
+              gmpMatch = ipoInvestorGainGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
               console.log("GMP Match from InvestorGain:", gmpMatch);
              }
 
