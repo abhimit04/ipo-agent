@@ -60,6 +60,8 @@ async function scrapeChittorgarhDetails(url) {
       if (label.includes("Listing Date")) details.listingDate = value;
     });
 // Company About
+   const aboutHeading = $("h2, h3").filter((_, el) => $(el).text().trim().startsWith("About ")).first();
+   const ipoName = aboutHeading.text().trim().replace("About ", "");
    details.company = {};
    const aboutSection = [];
 
