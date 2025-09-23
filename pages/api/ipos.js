@@ -179,10 +179,10 @@ export default async function handler(req, res) {
 //          const gmpMatch = gmpData.find(
 //            (g) => normalizeName(g.name) === normalizeName(ipo.name)
 //          );
-            let gmpMatch = let gmpMatch = fuzzyFindGMP(ipo.name, ipoCentralGMP);
+            let gmpMatch = fuzzyFindGMP(ipo.name, ipoCentralGMP);
             console.log("GMP Match from IPOWatch:", gmpMatch);
              if (!gmpMatch) {
-              gmpMatch = let gmpMatch = fuzzyFindGMP(ipo.name, ipoInvestorGainGMP);
+              gmpMatch = fuzzyFindGMP(ipo.name, ipoInvestorGainGMP);
               console.log("GMP Match from InvestorGain:", gmpMatch);
              }
 
