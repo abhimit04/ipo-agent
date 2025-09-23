@@ -95,10 +95,21 @@ async function scrapeGMPData() {
 
 async function fetchGMPFromInvestorGainList(ipos) {
   const results = [];
+
   for (const ipo of ipos) {
-    const gmp = await fetchGMPFromInvestorGain(ipo.name);
-    if (gmp !== null) results.push({ name: ipo.name, gmp });
+    try {
+      const gmp = await fetchGMPFromInvestorGain(ipo.name);
+      if (gmp !== null) {
+        results.push({ name: ipo.name, gmp });
+      } else {
+        console.warn(`No GMP found for ${ipo.name}`);
+      }
+    } catch (err) {
+      console.error(`Error fetching GMP for ${ipo.name}:`, err.message);
+      // continue with next IPO instead of breaking
+    }
   }
+
   return results;
 }
 
