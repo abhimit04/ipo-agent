@@ -58,9 +58,29 @@ async function scrapeChittorgarhDetails(url) {
       if (label.includes("Issue Size")) details.issueSize = value;
       if (label.includes("Listing Date")) details.listingDate = value;
     });
+// Company Details
+    details.company = {};
+    $("h3:contains('Company Details') + table tr").each((_, row) => {
+      const key = $(row).find("td:first-child").text().trim();
+      const value = $(row).find("td:last-child").text().trim();
+      details.company[key] = value;
+    });
+
+    // Financial Summary
+    details.financials = [];
+    $("h3:contains('Financial Summary') + table tr").each((_, row) => {
+      const cells = $(row).find("td");
+      if (cells.length > 1) {
+        const year = $(cells[0]).text().trim();
+        const revenue = $(cells[1]).text().trim();
+        const profit = $(cells[2]).text().trim();
+        details.financials.push({ year, revenue, profit });
+      }
+    });
 
     return details;
-  } catch {
+  } catch (err) {
+    console.error("Error scraping details:", err.message);
     return {};
   }
 }
