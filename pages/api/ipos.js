@@ -93,23 +93,38 @@ async function scrapeGMPData() {
   }
 }
 
+async function fetchGMPFromInvestorGain(ipoName) {
+  try {
+    const slug = ipoName.toLowerCase().replace(/\s+/g, "-");
+    const url = `https://www.investorgain.com/gmp/${slug}-ipo-gmp/`;
+
+    const response = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const gmpText = $("table tr:contains('GMP') td:last-child").text().trim();
+    return gmpText ? gmpText : null;
+  } catch (err) {
+    console.error(`❌ Error fetching GMP from InvestorGain for ${ipoName}:`, err.message);
+    return null;
+  }
+}
+
+// Multiple IPOs GMP fetcher
 async function fetchGMPFromInvestorGainList(ipos) {
   const results = [];
-
   for (const ipo of ipos) {
     try {
       const gmp = await fetchGMPFromInvestorGain(ipo.name);
       if (gmp !== null) {
         results.push({ name: ipo.name, gmp });
       } else {
-        console.warn(`No GMP found for ${ipo.name}`);
+        console.warn(`⚠️ No GMP found for ${ipo.name} on InvestorGain`);
       }
     } catch (err) {
-      console.error(`Error fetching GMP for ${ipo.name}:`, err.message);
-      // continue with next IPO instead of breaking
+      console.error(`❌ Error fetching GMP for ${ipo.name}:`, err.message);
     }
   }
-
   return results;
 }
 
