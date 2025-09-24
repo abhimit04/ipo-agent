@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Clock, TrendingUp, Star, Calendar, IndianRupee, Activity } from 'lucide-react';
+import Link from "next/link";
 
 export default function Landing() {
   const [ipos, setIpos] = useState({ upcoming: [], listed: [] });
@@ -131,7 +132,9 @@ export default function Landing() {
                   <div className="divide-y divide-slate-100">
                     {ipos.current?.map((ipo, idx) => (
                       <div key={idx} className="p-4 hover:bg-slate-50 transition-colors">
-                        <div className="font-semibold text-slate-900 mb-1">{ipo.name}</div>
+                        <Link href={`/ipo/${encodeURIComponent(ipo.name)}`}>
+                                <a className="font-semibold text-slate-900 mb-1 hover:underline">{ipo.name}</a>
+                         </Link>
                         <div className="text-sm text-slate-600 flex items-center gap-2">
 
                           Open: {ipo.issueOpenDate} | Close: {ipo.issueCloseDate} | Listing: {formatDate(ipo.listingDate) || 'TBD'}
