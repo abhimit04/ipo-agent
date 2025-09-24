@@ -83,7 +83,7 @@ async function scrapeChittorgarhDetails(url) {
        aboutSection.push($(el).text().trim());
      });
 
-   details.company.about = aboutSection.join("\n\n");
+   details.about = aboutSection.join("\n\n");
    console.log("Company About:", details.company.about);
 
     // Financials
