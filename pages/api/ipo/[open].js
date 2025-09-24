@@ -1,28 +1,24 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
-
-
 export default function IPODetailPage() {
   const router = useRouter();
-  const { name } = router.query; // normalized IPO name from URL
+  const { name } = router.query;
   const [ipo, setIpo] = useState(null);
 
   useEffect(() => {
-    if (!router.isReady) return; // wait until router is initialized
-    if (!name) return;
+    if (!router.isReady) return;
 
     async function fetchIPO() {
-      const res = await fetch("/api/ipos");
-      const data = await res.json();
-
-      // Find IPO by name (case-insensitive)
-      const allIPOs = [...data.upcoming, ...data.current, ...data.listed];
-      const ipoFound = allIPOs.find(
-        (i) => i.name.toLowerCase() === decodeURIComponent(name).toLowerCase()
-      );
-
-      setIpo(ipoFound || null);
+      try {
+        const res = await fetch(`/api/ipo/${encodeURIComponent(name)}`);
+        if (!res.ok) throw new Error("IPO not found");
+        const data = await res.json();
+        setIpo(data);
+      } catch (err) {
+        console.error("Error fetching IPO:", err);
+        setIpo(null);
+      }
     }
 
     fetchIPO();
