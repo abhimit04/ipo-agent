@@ -58,6 +58,7 @@ async function scrapeChittorgarhDetails(url) {
       if (label.includes("Lot Size")) details.lotSize = value;
       if (label.includes("Issue Size")) details.issueSize = value;
       if (label.includes("Listing Date")) details.listingDate = value;
+      console.log(`Parsed ${label}: ${value}`);
     });
 // Company About
    const aboutHeading = $("h2, h3").filter((_, el) => $(el).text().trim().startsWith("About ")).first();
@@ -100,6 +101,7 @@ async function scrapeChittorgarhDetails(url) {
     await saveIPOToDB(ipoName, details.company.about, details.financials);
 
     return details;
+
   } catch (err) {
     console.error("Error scraping details:", err.message);
     return {};
@@ -135,40 +137,40 @@ async function scrapeGMPData() {
   }
 }
 
-async function fetchGMPFromInvestorGain(ipoName) {
-  try {
-    const slug = ipoName.toLowerCase().replace(/\s+/g, "-");
-    const url = `https://www.investorgain.com/gmp/${slug}-ipo-gmp/`;
-
-    const response = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-    const html = await response.text();
-    const $ = cheerio.load(html);
-
-    const gmpText = $("table tr:contains('GMP') td:last-child").text().trim();
-    return gmpText ? gmpText : null;
-  } catch (err) {
-    console.error(`❌ Error fetching GMP from InvestorGain for ${ipoName}:`, err.message);
-    return null;
-  }
-}
+//async function fetchGMPFromInvestorGain(ipoName) {
+//  try {
+//    const slug = ipoName.toLowerCase().replace(/\s+/g, "-");
+//    const url = `https://www.investorgain.com/gmp/${slug}-ipo-gmp/`;
+//
+//    const response = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+//    const html = await response.text();
+//    const $ = cheerio.load(html);
+//
+//    const gmpText = $("table tr:contains('GMP') td:last-child").text().trim();
+//    return gmpText ? gmpText : null;
+//  } catch (err) {
+//    console.error(`❌ Error fetching GMP from InvestorGain for ${ipoName}:`, err.message);
+//    return null;
+//  }
+//}
 
 // Multiple IPOs GMP fetcher
-async function fetchGMPFromInvestorGainList(ipos) {
-  const results = [];
-  for (const ipo of ipos) {
-    try {
-      const gmp = await fetchGMPFromInvestorGain(ipo.name);
-      if (gmp !== null) {
-        results.push({ name: ipo.name, gmp });
-      } else {
-        console.warn(`⚠️ No GMP found for ${ipo.name} on InvestorGain`);
-      }
-    } catch (err) {
-      console.error(`❌ Error fetching GMP for ${ipo.name}:`, err.message);
-    }
-  }
-  return results;
-}
+//async function fetchGMPFromInvestorGainList(ipos) {
+//  const results = [];
+//  for (const ipo of ipos) {
+//    try {
+//      const gmp = await fetchGMPFromInvestorGain(ipo.name);
+//      if (gmp !== null) {
+//        results.push({ name: ipo.name, gmp });
+//      } else {
+//        console.warn(`⚠️ No GMP found for ${ipo.name} on InvestorGain`);
+//      }
+//    } catch (err) {
+//      console.error(`❌ Error fetching GMP for ${ipo.name}:`, err.message);
+//    }
+//  }
+//  return results;
+//}
 
 function normalizeName(name) {
   return name
@@ -201,7 +203,7 @@ export default async function handler(req, res) {
 
     const ipos = await scrapeChittorgarhList();
      const ipoCentralGMP = await scrapeGMPData();
-    const ipoInvestorGainGMP = await fetchGMPFromInvestorGainList(ipos);
+    //const ipoInvestorGainGMP = await fetchGMPFromInvestorGainList(ipos);
 
     const detailedIPOs = await Promise.all(
       ipos
@@ -219,10 +221,10 @@ export default async function handler(req, res) {
                    || normalizeName(g.name).includes(normalizeName(ipo.name))
             );
             console.log("GMP Match from IPOWatch:", gmpMatch);
-             if (!gmpMatch) {
-              gmpMatch = ipoInvestorGainGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
-              //console.log("GMP Match from InvestorGain:", gmpMatch);
-             }
+//             if (!gmpMatch) {
+//              gmpMatch = ipoInvestorGainGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
+//              //console.log("GMP Match from InvestorGain:", gmpMatch);
+//             }
 
           return {
             ...ipo,
