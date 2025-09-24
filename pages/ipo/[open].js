@@ -26,7 +26,7 @@ export default function IPODetailPage() {
     }
 
     fetchIPO();
-  }, [name]);
+  }, [router.isReady, name]);
 
   if (!ipo) return <p>Loading IPO details...</p>;
 
