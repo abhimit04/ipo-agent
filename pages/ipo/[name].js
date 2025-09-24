@@ -5,6 +5,7 @@ export default function IPODetailPage() {
   const router = useRouter();
   const { name } = router.query;
   const [ipo, setIpo] = useState(null);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -45,9 +46,23 @@ export default function IPODetailPage() {
 
       {/* Box 2: About */}
       <div className="p-4 border rounded shadow-sm bg-white">
-        <h2 className="text-xl font-semibold mb-2">About the Company</h2>
-        <p className="whitespace-pre-line">{ipo.about}</p>
-      </div>
+              <h2 className="text-xl font-semibold mb-2">About the Company</h2>
+              <p
+                className={`whitespace-pre-line ${
+                  aboutExpanded ? "" : "line-clamp-5"
+                }`}
+              >
+                {ipo.about}
+              </p>
+              {ipo.about?.length > 300 && (
+                <button
+                  onClick={() => setAboutExpanded(!aboutExpanded)}
+                  className="mt-2 text-blue-600 font-medium hover:underline"
+                >
+                  {aboutExpanded ? "Read less" : "Read more"}
+                </button>
+              )}
+            </div>
 
       {/* Box 3: Financials */}
       <div className="p-4 border rounded shadow-sm bg-white">
