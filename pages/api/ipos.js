@@ -106,7 +106,7 @@ async function scrapeChittorgarhDetails(url) {
     return {
       ...details,
       name: ipoName,
-      company: { about: details.company.about },
+      company: { about: details.company.about || details.about },
       financials: details.financials
     };
 

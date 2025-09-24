@@ -46,7 +46,7 @@ export default function IPODetailPage() {
       {/* Box 2: About */}
       <div className="p-4 border rounded shadow-sm bg-white">
         <h2 className="text-xl font-semibold mb-2">About the Company</h2>
-        <p className="whitespace-pre-line">{ipo.company?.about}</p>
+        <p className="whitespace-pre-line">{ipo.about}</p>
       </div>
 
       {/* Box 3: Financials */}
