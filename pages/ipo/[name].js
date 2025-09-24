@@ -88,8 +88,23 @@ export default function IPODetailPage() {
   if (!ipo) return <p>Loading IPO details...</p>;
 
   const financialsArray = ipo.financials
-    ? parseFinancials(ipo.financials)
-    : [];
+      ? ipo.financials
+          .split("\n")
+          .filter((row) => row.trim() !== "")
+          .slice(1) // skip header if exists
+          .map((row) => {
+            const cols = row.split("\t"); // adjust delimiter if needed
+            return {
+              periodEnded: cols[0] || "-",
+              assets: cols[1] || "-",
+              totalIncome: cols[2] || "-",
+              profitAfterTax: cols[3] || "-",
+              ebitda: cols[4] || "-",
+              netWorth: cols[5] || "-",
+              totalBorrowing: cols[6] || "-",
+            };
+          })
+      : [];
 
 
   return (
