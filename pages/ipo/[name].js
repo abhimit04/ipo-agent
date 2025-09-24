@@ -85,7 +85,12 @@ export default function IPODetailPage() {
     fetchIPO();
   }, [router.isReady, name]);
 
-  if (!ipo) return <p>Loading IPO details...</p>;
+  if (!ipo)
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-blue-50">
+        <p className="text-lg font-semibold text-blue-900">Loading IPO details...</p>
+      </div>
+    );
 
   const financialsArray = ipo.financials
       ? ipo.financials
