@@ -87,8 +87,13 @@ export default function IPODetailPage() {
 
   if (!ipo)
     return (
-      <div className="flex items-center justify-center min-h-screen bg-blue-50">
-        <p className="text-lg font-semibold text-blue-900">Loading IPO details...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-blue-50">
+        {/* Spinner */}
+        <div className="w-12 h-12 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+        {/* Loading text */}
+        <p className="text-lg font-semibold text-blue-900 animate-pulse">
+          Loading IPO details...
+        </p>
       </div>
     );
 
