@@ -1,6 +1,66 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
+// Financials table component
+function FinancialsTable({ financials }) {
+  if (!financials?.length) return <p>No financials available.</p>;
+  return (
+    <table className="min-w-full border border-gray-300 text-sm">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="border px-2 py-1">Period Ended</th>
+          <th className="border px-2 py-1">Assets</th>
+          <th className="border px-2 py-1">Total Income</th>
+          <th className="border px-2 py-1">Profit After Tax</th>
+          <th className="border px-2 py-1">EBITDA</th>
+          <th className="border px-2 py-1">Net Worth</th>
+          <th className="border px-2 py-1">Total Borrowing</th>
+        </tr>
+      </thead>
+      <tbody>
+        {financials.map((f, i) => (
+          <tr key={i}>
+            <td className="border px-2 py-1">{f.periodEnded}</td>
+            <td className="border px-2 py-1">{f.assets}</td>
+            <td className="border px-2 py-1">{f.totalIncome}</td>
+            <td className="border px-2 py-1">{f.profitAfterTax}</td>
+            <td className="border px-2 py-1">{f.ebitda}</td>
+            <td className="border px-2 py-1">{f.netWorth}</td>
+            <td className="border px-2 py-1">{f.totalBorrowing}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// Parser to convert tab-separated financial string into array of objects
+function parseFinancials(financialsStr) {
+  if (!financialsStr) return [];
+  const lines = financialsStr.trim().split("\n");
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split("\t").map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const values = line.split("\t").map(v => v.trim());
+    const obj = {};
+    headers.forEach((h, i) => {
+      const key = h.toLowerCase().replace(/\s+/g, "").replace(/[^a-z]/g, "");
+      obj[key] = values[i] || "";
+    });
+    return {
+      periodEnded: obj.periodended,
+      assets: obj.assets,
+      totalIncome: obj.totalincome,
+      profitAfterTax: obj.profitaftertax,
+      ebitda: obj.ebitda,
+      netWorth: obj.networth,
+      totalBorrowing: obj.totalborrowing,
+    };
+  });
+}
+
+
 export default function IPODetailPage() {
   const router = useRouter();
   const { name } = router.query;
@@ -26,6 +86,7 @@ export default function IPODetailPage() {
   }, [router.isReady, name]);
 
   if (!ipo) return <p>Loading IPO details...</p>;
+
 
   return (
     <div className="p-6 space-y-6">
@@ -65,50 +126,10 @@ export default function IPODetailPage() {
             </div>
 
       {/* Box 3: Financials */}
-      {/* Box 3: Financials in table */}
-      <div className="p-4 border rounded shadow-sm bg-white">
-        <h2 className="text-xl font-semibold mb-2">Company Financials</h2>
-        {ipo.financials ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-200 divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  {ipo.financials
-                    .split("\n")[0]
-                    .split(/\t| {2,}/)
-                    .map((header, idx) => (
-                      <th
-                        key={idx}
-                        className="px-4 py-2 text-left text-sm font-medium text-gray-700"
-                      >
-                        {header}
-                      </th>
-                    ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {ipo.financials
-                  .split("\n")
-                  .slice(1)
-                  .map((row, idx) => (
-                    <tr key={idx}>
-                      {row
-                        .split(/\t| {2,}/)
-                        .map((cell, cidx) => (
-                          <td key={cidx} className="px-4 py-2 text-sm text-gray-700">
-                            {cell}
-                          </td>
-                        ))}
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>No financial data available.</p>
-        )}
-      </div>
-
+       <div className="p-4 border rounded shadow-sm bg-white">
+              <h2 className="text-xl font-semibold mb-2">Company Financials</h2>
+              <FinancialsTable financials={financialsArray} />
+            </div>
     </div>
   );
 }
