@@ -58,9 +58,9 @@ async function scrapeChittorgarhDetails(url) {
       if (label.includes("Lot Size")) details.lotSize = value;
       if (label.includes("Issue Size")) details.issueSize = value;
       if (label.includes("Listing Date")) details.listingDate = value;
-      if (label.includes("Tentative Allotment Date")) details.allotmentDate = value;
+      if (label.includes("Tentative Allotment")) details.allotmentDate = value;
       if (label.includes("Initiation of Refunds")) details.refund = value;
-      if (label.includes("Credit to Demat")) details.demat = value;
+      if (label.includes("Credit of Shares to Demat")) details.demat = value;
       //console.log(`Parsed ${label}: ${value}`);
     });
 // Company About

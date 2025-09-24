@@ -36,9 +36,9 @@ export default function IPODetailPage() {
         <p><strong>Lot Size:</strong> {ipo.lotSize}</p>
         <p><strong>Issue Size:</strong> {ipo.issueSize}</p>
         <p><strong>Listing Date:</strong> {ipo.listingDate}</p>
-        <p><strong>Tentative Allotment Date:</strong> {ipo.allotmentDate}</p>
+        <p><strong>Tentative Allotment:</strong> {ipo.allotmentDate}</p>
         <p><strong>Initiation of Refunds:</strong> {ipo.refund}</p>
-        <p><strong>Credit to Demat:</strong> {ipo.demat}</p>
+        <p><strong>Credit of Shares to Demat:</strong> {ipo.demat}</p>
         {ipo.gmp && <p><strong>GMP:</strong> {ipo.gmp}</p>}
         {ipo.gainPercent && <p><strong>Gain %:</strong> {ipo.gainPercent}</p>}
       </div>
