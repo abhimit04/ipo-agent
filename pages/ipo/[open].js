@@ -1,12 +1,15 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
+
+
 export default function IPODetailPage() {
   const router = useRouter();
   const { name } = router.query; // normalized IPO name from URL
   const [ipo, setIpo] = useState(null);
 
   useEffect(() => {
+    if (!router.isReady) return; // wait until router is initialized
     if (!name) return;
 
     async function fetchIPO() {
