@@ -26,6 +26,7 @@
     "string-similarity": "^4.0.4"
   },
   "devDependencies": {
+    "@tailwindcss/line-clamp": "^0.4.4",
     "autoprefixer": "^10.4.14",
     "eslint": "8.50.0",
     "eslint-config-next": "14.0.0",
