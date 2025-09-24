@@ -103,7 +103,7 @@ async function scrapeChittorgarhDetails(url) {
     // Save to DB
     await saveIPOToDB(ipoName, details.company.about, details.financials);
 
-    return { ...details, name: ipoName, company.about, financials };
+    return { ...details, name: ipoName, about, financials };
 
   } catch (err) {
     console.error("Error scraping details:", err.message);
