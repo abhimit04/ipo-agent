@@ -58,7 +58,7 @@ async function scrapeChittorgarhDetails(url) {
       if (label.includes("Lot Size")) details.lotSize = value;
       if (label.includes("Issue Size")) details.issueSize = value;
       if (label.includes("Listing Date")) details.listingDate = value;
-      console.log(`Parsed ${label}: ${value}`);
+      //console.log(`Parsed ${label}: ${value}`);
     });
 // Company About
    const aboutHeading = $("h2, h3").filter((_, el) => $(el).text().trim().startsWith("About ")).first();
@@ -68,7 +68,7 @@ async function scrapeChittorgarhDetails(url) {
      const existing = await getIPOFromDB(ipoName);
      if (existing && existing.about && existing.financials) {
        console.log(`IPO "${ipoName}" already in Supabase. Skipping scrape.`);
-       return existing; // return data directly
+       return { ...details, name: ipoName, about: existing.about, financials: existing.financials }; // return data directly
      }
 
    details.company = {};
@@ -100,7 +100,7 @@ async function scrapeChittorgarhDetails(url) {
     // Save to DB
     await saveIPOToDB(ipoName, details.company.about, details.financials);
 
-    return details;
+    return { ...details, name: ipoName, about, financials };
 
   } catch (err) {
     console.error("Error scraping details:", err.message);
