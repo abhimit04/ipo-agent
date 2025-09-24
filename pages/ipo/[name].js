@@ -87,6 +87,8 @@ export default function IPODetailPage() {
 
   if (!ipo) return <p>Loading IPO details...</p>;
 
+  const financialsArray = parseFinancials(ipo.financials);
+
 
   return (
     <div className="p-6 space-y-6">
