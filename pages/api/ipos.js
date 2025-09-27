@@ -261,7 +261,7 @@ export default async function handler(req, res) {
       (ipo) => ipo.status.toLowerCase() === "closed"
     );
 
-    // Cache result for 15 minutes
+    // Cache result for 15 minut
       //await redis.set("ipos_cache", JSON.stringify(response), { EX: 600 });
       //console.log("✅ IPO data cached in Redis (expires in 15 min)");
 
