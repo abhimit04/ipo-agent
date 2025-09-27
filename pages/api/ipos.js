@@ -145,6 +145,66 @@ async function scrapeGMPData() {
   }
 }
 
+// ===== NEW FUNCTION: Scrape News from multiple sources =====
+async function scrapeIPONews(ipoName) {
+  const sources = [
+    { name: "Moneycontrol", url: `https://www.moneycontrol.com/news/tags/${ipoName}` },
+    { name: "ZeeBusiness", url: `https://www.zeebiz.com/search?q=${ipoName}` },
+    { name: "Quint", url: `https://www.thequint.com/search?q=${ipoName}` },
+    { name: "Economic Times", url: `https://economictimes.indiatimes.com/topic/${ipoName}` },
+  ];
+
+  const allNews = [];
+
+  for (const source of sources) {
+    try {
+      const res = await fetch(source.url, { headers: { "User-Agent": "Mozilla/5.0" } });
+      const html = await res.text();
+      const $ = cheerio.load(html);
+
+      // Extract titles and links (generic selector; may need site-specific tweaks)
+      $("a").each((_, el) => {
+        const title = $(el).text().trim();
+        const link = $(el).attr("href");
+        if (title && link) {
+          allNews.push({ source: source.name, title, link });
+        }
+      });
+    } catch (err) {
+      console.error(`Error fetching news from ${source.name}:`, err.message);
+    }
+  }
+
+  return allNews;
+}
+
+// ===== NEW FUNCTION: Send IPO data + news to Gemini AI =====
+async function callGeminiAI({ ipoName, details, news }) {
+  const prompt = `
+You are an expert financial analyst. Summarize key points from the following IPO: ${ipoName}.
+Details: ${JSON.stringify(details)}
+News: ${news.map(n => `${n.source}: ${n.title} - ${n.link}`).join("\n")}
+Provide:
+1. Summary of key points
+2. Risks
+3. Market sentiment
+4. Recommendation: BID / AVOID / HOLD
+`;
+
+  const response = await fetch("https://api.gemini.ai/summarize", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
+    },
+    body: JSON.stringify({ prompt }),
+  });
+  const result = await response.json();
+  return result.summary;
+}
+
+
+
 //async function fetchGMPFromInvestorGain(ipoName) {
 //  try {
 //    const slug = ipoName.toLowerCase().replace(/\s+/g, "-");
@@ -233,6 +293,16 @@ export default async function handler(req, res) {
 //              gmpMatch = ipoInvestorGainGMP.find((g) => normalizeName(g.name) === normalizeName(ipo.name));
 //              //console.log("GMP Match from InvestorGain:", gmpMatch);
 //             }
+
+            // ===== NEW: Fetch news =====
+            const news = await scrapeIPONews(ipo.name);
+
+                  // ===== NEW: Call Gemini AI to summarize =====
+            const aiSummary = await callGeminiAI({
+            ipoName: ipo.name,
+            details,
+            news,
+            });
 
           return {
             ...ipo,
