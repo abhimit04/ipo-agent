@@ -2,6 +2,9 @@ import * as cheerio from "cheerio";
 import fetch from "node-fetch";
 import stringSimilarity from "string-similarity";
 import { saveIPOToDB,getIPOFromDB } from "../../lib/db.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+//const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 //import puppeteer from "puppeteer";
 //import Redis from "ioredis";
 //import redisClient from '../../lib/redis';
@@ -176,35 +179,43 @@ async function scrapeIPONews(ipoName) {
   }
 
   return allNews;
-  console.log(allNews);
+  ///console.log(allNews);
 }
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+
+// ✅ Switch to Gemini 2.5 Pro
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
 // ===== NEW FUNCTION: Send IPO data + news to Gemini AI =====
-async function callGeminiAI({ ipoName, details, news }) {
+async function summarizeIPO({ ipoName, details, news }) {
+  const headlinesList = news.map(
+    (item) => `- ${item.title} (${item.source} - ${item.link})`
+  );
+
   const prompt = `
-You are an expert financial analyst. Summarize key points from the following IPO: ${ipoName}.
+You are a financial analyst. Summarize the following IPO details and news:
+IPO: ${ipoName}
 Details: ${JSON.stringify(details)}
-News: ${news.map(n => `${n.source}: ${n.title} - ${n.link}`).join("\n")}
-Provide:
-1. Summary of key points
+News Headlines:
+${headlinesList.join("\n")}
+
+Return:
+1. Key Summary
 2. Risks
-3. Market sentiment
-4. Recommendation: BID / AVOID / HOLD
+3. Market Sentiment
+4. Recommendation: SUBSCRIBE / AVOID / HOLD
 `;
 
-  const response = await fetch("https://api.gemini.ai/summarize", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
-    },
-    body: JSON.stringify({ prompt }),
-  });
-  const result = await response.json();
-  return result.summary;
-  console.log(results.summary);
-}
+  const result = await model.generateContent(prompt);
 
+  // ✅ SDK response returns `.response.text()`
+  const summaryText = result.response?.text() || "No summary available";
+
+  return summaryText;
+
+  console.log(summaryText);
+}
 
 
 //async function fetchGMPFromInvestorGain(ipoName) {
@@ -301,7 +312,7 @@ export default async function handler(req, res) {
             console.log(news);
 
                   // ===== NEW: Call Gemini AI to summarize =
-            const aiSummary = await callGeminiAI({
+            const aiSummary = summarizeIPO({
             ipoName: ipo.name,
             details,
             news,
@@ -313,6 +324,8 @@ export default async function handler(req, res) {
             ...details,
             gmp: gmpMatch?.gmp || null,
             gainPercent: gmpMatch?.gainPercent || null,
+            aiSummary: aiSummary || null,
+
           };
         })
     );
