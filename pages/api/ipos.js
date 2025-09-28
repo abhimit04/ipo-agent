@@ -201,6 +201,7 @@ Provide:
   });
   const result = await response.json();
   return result.summary;
+  console.log(results.summary);
 }
 
 
