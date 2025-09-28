@@ -296,10 +296,10 @@ export default async function handler(req, res) {
 //              //console.log("GMP Match from InvestorGain:", gmpMatch);
 //             }
 
-            // ===== NEW: Fetch news =====
+            // ===== NEW: Fetch news ===
             const news = await scrapeIPONews(ipo.name);
 
-                  // ===== NEW: Call Gemini AI to summarize =====
+                  // ===== NEW: Call Gemini AI to summarize =
             const aiSummary = await callGeminiAI({
             ipoName: ipo.name,
             details,
