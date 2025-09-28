@@ -176,6 +176,7 @@ async function scrapeIPONews(ipoName) {
   }
 
   return allNews;
+  console.log(allNews);
 }
 
 // ===== NEW FUNCTION: Send IPO data + news to Gemini AI =====
