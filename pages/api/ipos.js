@@ -298,6 +298,7 @@ export default async function handler(req, res) {
 
             // ===== NEW: Fetch news ===
             const news = await scrapeIPONews(ipo.name);
+            console.log(news);
 
                   // ===== NEW: Call Gemini AI to summarize =
             const aiSummary = await callGeminiAI({
@@ -305,6 +306,7 @@ export default async function handler(req, res) {
             details,
             news,
             });
+            console.log(aiSummary);
 
           return {
             ...ipo,
