@@ -185,7 +185,7 @@ async function scrapeIPONews(ipoName) {
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
 // ✅ Switch to Gemini 2.5 Pro
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // ===== NEW FUNCTION: Send IPO data + news to Gemini AI ==
 async function summarizeIPO({ ipoName, details, news }) {
