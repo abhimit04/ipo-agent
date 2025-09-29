@@ -148,41 +148,43 @@ async function scrapeGMPData() {
   }
 }
 
-// ===== NEW FUNCTION: Scrape News from multiple sources =====
-async function scrapeIPONews(ipoName) {
-  const sources = [
-    { name: "Moneycontrol", url: `https://www.moneycontrol.com/news/tags/${ipoName}` },
-    { name: "ZeeBusiness", url: `https://www.zeebiz.com/search?q=${ipoName}` },
-    { name: "Quint", url: `https://www.thequint.com/search?q=${ipoName}` },
-    { name: "Economic Times", url: `https://economictimes.indiatimes.com/topic/${ipoName}` },
-  ];
+/async function fetchIPONews(ipoName) {
+   const sources = [
+     "moneycontrol.com",
+     "etnownews.com",
+     "livemint.com",
+     "economictimes.indiatimes.com"
+   ];
 
-  const allNews = [];
+   const allNews = [];
 
-  for (const source of sources) {
-    try {
-      const res = await fetch(source.url, { headers: { "User-Agent": "Mozilla/5.0" } });
-      const html = await res.text();
-      const $ = cheerio.load(html);
+   for (const site of sources) {
+     const query = `${ipoName} site:${site}`;
+     const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${process.env.GOOGLE_CSE_ID}&key=${process.env.GOOGLE_CSE_KEY}`;
 
-      // Extract titles and links (generic selector; may need site-specific tweaks)
-      $("a").each((_, el) => {
-        const title = $(el).text().trim();
-        const link = $(el).attr("href");
-        if (title && link) {
-          allNews.push({ source: source.name, title, link });
-        }
-      });
-    } catch (err) {
-      console.error(`Error fetching news from ${source.name}:`, err.message);
-    }
-  }
+     try {
+       const res = await fetch(url);
+       const data = await res.json();
 
-  return allNews;
-  ///console.log(allNews);
-}
+       if (data.items) {
+         for (const item of data.items) {
+           allNews.push({
+             source: site,
+             title: item.title,
+             snippet: item.snippet,
+             link: item.link,
+           });
+         }
+       }
+     } catch (err) {
+       console.error(`❌ Error fetching from ${site}:`, err.message);
+     }
+   }
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+   return allNews;
+ }
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ✅ Switch to Gemini 2.5 Pro
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
