@@ -148,7 +148,7 @@ async function scrapeGMPData() {
   }
 }
 
-/async function fetchIPONews(ipoName) {
+async function fetchIPONews(ipoName) {
    const sources = [
      "moneycontrol.com",
      "etnownews.com",
@@ -309,8 +309,8 @@ export default async function handler(req, res) {
 //              //console.log("GMP Match from InvestorGain:", gmpMatch);
 //             }
 
-            // ===== NEW: Fetch news ===
-            const news = await scrapeIPONews(ipo.name);
+            // ===== NEW: Fetch news ========
+            const news = await fetchIPONews(ipo.name);
             console.log(news);
 
                   // ===== NEW: Call Gemini AI to summarize =
