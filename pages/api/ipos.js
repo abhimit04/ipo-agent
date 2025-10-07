@@ -148,41 +148,122 @@ async function scrapeGMPData() {
   }
 }
 
-async function fetchIPONews(ipoName) {
-   const sources = [
-     "moneycontrol.com",
-     "etnownews.com",
-     "livemint.com",
-     "economictimes.indiatimes.com"
-   ];
+import * as cheerio from "cheerio";
+import fetch from "node-fetch";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-   const allNews = [];
+// ⚙️ Gemini AI Initialization
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-   for (const site of sources) {
-     const query = `${ipoName} site:${site}`;
-     const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${process.env.GOOGLE_CSE_ID}&key=${process.env.GOOGLE_CSE_KEY}`;
+/** 🔹 1. Scrape IPO list from Chittorgarh */
+async function getIPOList() {
+    const res = await fetch("https://www.chittorgarh.com/ipo/", {
+        headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const ipos = [];
 
-     try {
-       const res = await fetch(url);
-       const data = await res.json();
+    $("table tbody tr").each((_, row) => {
+        const tds = $(row).find("td");
+        if (tds.length >= 4) {
+            const link = $(tds[0]).find("a").attr("href");
+            ipos.push({
+                name: $(tds[0]).text().trim(),
+                issueOpenDate: $(tds[1]).text().trim(),
+                issueCloseDate: $(tds[2]).text().trim(),
+                status: $(tds[3]).text().trim(),
+                detailUrl: link ? `https://www.chittorgarh.com${link}` : null,
+            });
+        }
+    });
 
-       if (data.items) {
-         for (const item of data.items) {
-           allNews.push({
-             source: site,
-             title: item.title,
-             snippet: item.snippet,
-             link: item.link,
-           });
-         }
-       }
-     } catch (err) {
-       console.error(`❌ Error fetching from ${site}:`, err.message);
-     }
-   }
+    return ipos.filter((i) =>
+        ["current", "upcoming"].includes(i.status.toLowerCase())
+    );
+}
 
-   return allNews;
- }
+/** 🔹 2. Scrape individual IPO details */
+async function getIPODetails(url) {
+    if (!url) return {};
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    const html = await res.text();
+    const $ = cheerio.load(html);
+
+    const details = {};
+    $("table.table tr").each((_, row) => {
+        const label = $(row).find("td:first-child").text().trim();
+        const value = $(row).find("td:last-child").text().trim();
+        if (label.includes("Price Band")) details.priceBand = value;
+        if (label.includes("Lot Size")) details.lotSize = value;
+        if (label.includes("Issue Size")) details.issueSize = value;
+        if (label.includes("Listing Date")) details.listingDate = value;
+    });
+
+    // About section
+    const aboutSection = [];
+    $("h2, h3")
+        .filter((_, el) => $(el).text().trim().startsWith("About "))
+        .nextUntil("h2, h3")
+        .each((_, el) => aboutSection.push($(el).text().trim()));
+    details.about = aboutSection.join("\n");
+
+    // Financials section
+    const finSection = [];
+    $("h2, h3")
+        .filter((_, el) => $(el).text().trim().includes("Company Financials"))
+        .nextUntil("h2, h3")
+        .each((_, el) => finSection.push($(el).text().trim()));
+    details.financials = finSection.join("\n");
+
+    return details;
+}
+
+/** 🔹 3. Scrape IPO-related news (direct scraping) */
+async function getIPONews(ipoName) {
+    const sources = [
+        { site: "Moneycontrol", url: `https://www.moneycontrol.com/search/?query=${encodeURIComponent(ipoName)}&type=news` },
+        { site: "Economic Times", url: `https://economictimes.indiatimes.com/search.cms?query=${encodeURIComponent(ipoName)}` },
+        { site: "LiveMint", url: `https://www.livemint.com/Search/Link/Keyword/${encodeURIComponent(ipoName)}` },
+    ];
+
+    const allNews = [];
+
+    for (const src of sources) {
+        try {
+            const res = await fetch(src.url, { headers: { "User-Agent": "Mozilla/5.0" } });
+            const html = await res.text();
+            const $ = cheerio.load(html);
+
+            if (src.site === "Moneycontrol") {
+                $("li.clearfix").each((_, el) => {
+                    const title = $(el).find("h2 a").text().trim();
+                    const link = $(el).find("h2 a").attr("href");
+                    const snippet = $(el).find("p").text().trim();
+                    if (title) allNews.push({ title, link, snippet, source: src.site });
+                });
+            } else if (src.site === "Economic Times") {
+                $("div.eachStory").each((_, el) => {
+                    const title = $(el).find("h3 a").text().trim();
+                    const link = $(el).find("h3 a").attr("href");
+                    const snippet = $(el).find("p").text().trim();
+                    if (title) allNews.push({ title, link, snippet, source: src.site });
+                });
+            } else if (src.site === "LiveMint") {
+                $("div.listing li").each((_, el) => {
+                    const title = $(el).find("a").text().trim();
+                    const link = $(el).find("a").attr("href");
+                    if (title) allNews.push({ title, link, source: src.site });
+                });
+            }
+        } catch (err) {
+            console.warn(`⚠️ Failed to fetch news from ${src.site}: ${err.message}`);
+        }
+    }
+
+    return allNews.slice(0, 8); // limit to top 8 news items
+}
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
