@@ -148,78 +148,6 @@ async function scrapeGMPData() {
   }
 }
 
-import * as cheerio from "cheerio";
-import fetch from "node-fetch";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// ⚙️ Gemini AI Initialization
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-/** 🔹 1. Scrape IPO list from Chittorgarh */
-async function getIPOList() {
-    const res = await fetch("https://www.chittorgarh.com/ipo/", {
-        headers: { "User-Agent": "Mozilla/5.0" },
-    });
-    const html = await res.text();
-    const $ = cheerio.load(html);
-    const ipos = [];
-
-    $("table tbody tr").each((_, row) => {
-        const tds = $(row).find("td");
-        if (tds.length >= 4) {
-            const link = $(tds[0]).find("a").attr("href");
-            ipos.push({
-                name: $(tds[0]).text().trim(),
-                issueOpenDate: $(tds[1]).text().trim(),
-                issueCloseDate: $(tds[2]).text().trim(),
-                status: $(tds[3]).text().trim(),
-                detailUrl: link ? `https://www.chittorgarh.com${link}` : null,
-            });
-        }
-    });
-
-    return ipos.filter((i) =>
-        ["current", "upcoming"].includes(i.status.toLowerCase())
-    );
-}
-
-/** 🔹 2. Scrape individual IPO details */
-async function getIPODetails(url) {
-    if (!url) return {};
-    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-    const html = await res.text();
-    const $ = cheerio.load(html);
-
-    const details = {};
-    $("table.table tr").each((_, row) => {
-        const label = $(row).find("td:first-child").text().trim();
-        const value = $(row).find("td:last-child").text().trim();
-        if (label.includes("Price Band")) details.priceBand = value;
-        if (label.includes("Lot Size")) details.lotSize = value;
-        if (label.includes("Issue Size")) details.issueSize = value;
-        if (label.includes("Listing Date")) details.listingDate = value;
-    });
-
-    // About section
-    const aboutSection = [];
-    $("h2, h3")
-        .filter((_, el) => $(el).text().trim().startsWith("About "))
-        .nextUntil("h2, h3")
-        .each((_, el) => aboutSection.push($(el).text().trim()));
-    details.about = aboutSection.join("\n");
-
-    // Financials section
-    const finSection = [];
-    $("h2, h3")
-        .filter((_, el) => $(el).text().trim().includes("Company Financials"))
-        .nextUntil("h2, h3")
-        .each((_, el) => finSection.push($(el).text().trim()));
-    details.financials = finSection.join("\n");
-
-    return details;
-}
-
 /** 🔹 3. Scrape IPO-related news (direct scraping) */
 async function getIPONews(ipoName) {
     const sources = [
@@ -264,6 +192,7 @@ async function getIPONews(ipoName) {
 
     return allNews.slice(0, 8); // limit to top 8 news items
 }
+
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -391,7 +320,7 @@ export default async function handler(req, res) {
 //             }
 
             // ===== NEW: Fetch news ========
-            const news = await fetchIPONews(ipo.name);
+            const news = await getIPONews(ipo.name);
             console.log(news);
 
                   // ===== NEW: Call Gemini AI to summarize =
