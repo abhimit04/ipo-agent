@@ -189,7 +189,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // ✅ Switch to Gemini 2.5 Pro
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-// ===== NEW FUNCTION: Send IPO data + news to Gemini AI ==
+// ===== NEW FUNCTION: Send IPO data + news to Gemini AI
 async function summarizeIPO({ ipoName, details, news }) {
   const headlinesList = news.map(
     (item) => `- ${item.title} (${item.source} - ${item.link})`
